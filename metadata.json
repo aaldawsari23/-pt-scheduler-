@@ -1,0 +1,5 @@
+{
+  "name": "PT Scheduler (مجدوِل العلاج الطبيعي)",
+  "description": "An offline-first, Arabic-language scheduling application for a physical therapy department. It features multiple calendar views, advanced rule-based booking, and administrative settings for managing providers and schedules. All data is stored locally in the browser.",
+  "requestFramePermissions": []
+}
