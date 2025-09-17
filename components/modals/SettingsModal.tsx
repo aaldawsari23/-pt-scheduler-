@@ -5,7 +5,7 @@ import type { Provider, Vacation, TimeOff, ExtraCapacity, AuditEntry } from '../
 import { Specialty } from '../../types';
 import { generateUniqueId, exportToJson, exportToCsv, transliterate } from '../../utils/helpers';
 import { getISODateString, toGregorianDateTimeString, toGregorianTimeString } from '../../utils/dateUtils';
-import { ASEER_LOGO_B64 } from '../../constants';
+import { ASEER_LOGO_URL } from '../../constants';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -262,7 +262,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               <div className="pt-4 border-t border-slate-200">
                 <span className="text-slate-600 font-medium">شعار التطبيق</span>
                 <div className="flex items-center gap-4 mt-2">
-                    <img src={settings.customLogoB64 || ASEER_LOGO_B64} alt="Current Logo" className="h-16 w-16 rounded-md object-contain bg-white border border-slate-200 p-1" />
+                    <img src={settings.customLogoB64 || ASEER_LOGO_URL} alt="Current Logo" className="h-16 w-16 rounded-md object-contain bg-white border border-slate-200 p-1" />
                     <div className="flex items-center gap-2">
                         <input type="file" id="logoUpload" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} className="hidden" />
                         <label htmlFor="logoUpload" className="cursor-pointer bg-white text-slate-700 px-3 py-2 text-sm rounded-md border border-slate-300 hover:bg-slate-50">تغيير الشعار</label>

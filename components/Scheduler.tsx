@@ -8,7 +8,7 @@ import { generateUniqueId } from '../utils/helpers';
 import { addDays, addWeeks, addMonths, getISODateString, toHijriDateString, toGregorianDateString, toGregorianTimeString } from '../utils/dateUtils';
 import SettingsModal from './modals/SettingsModal';
 import HepModal from './modals/HepModal';
-import { ASEER_LOGO_B64, WORK_HOURS, SLOT_DURATION_MINUTES } from '../constants';
+import { ASEER_LOGO_URL, WORK_HOURS, SLOT_DURATION_MINUTES } from '../constants';
 import BookingBar from './BookingBar';
 import StatsBar from './common/StatsBar';
 import LanguageToggle from './common/LanguageToggle';
@@ -67,7 +67,7 @@ const Scheduler: React.FC = () => {
     document.documentElement.dir = (settings.language === 'en') ? 'ltr' : 'rtl';
   }, [settings.language]);
   
-  const logo = settings.customLogoB64 || ASEER_LOGO_B64;
+  const logo = settings.customLogoB64 || ASEER_LOGO_URL;
   const hijriDateStr = toHijriDateString(currentDate);
 
   const handleSpecialtyChange = (specialty: Specialty) => {

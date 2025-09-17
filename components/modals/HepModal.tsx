@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ReactNode, useRef } from 'react';
 import Modal from '../common/Modal';
-import { HEP_CONTENT, HEP_DISCLAIMER, ASEER_LOGO_B64 } from '../../constants';
+import { HEP_CONTENT, HEP_DISCLAIMER, ASEER_LOGO_URL } from '../../constants';
 import type { HepContent, HepExercise } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 
@@ -97,7 +97,7 @@ interface HepModalProps {
 const HepModal: React.FC<HepModalProps> = ({ isOpen, onClose }) => {
   const { settings } = useAppContext();
   const [activeTab, setActiveTab] = useState(HEP_CONTENT[0].id);
-  const logo = settings.customLogoB64 || ASEER_LOGO_B64;
+  const logo = settings.customLogoB64 || ASEER_LOGO_URL;
   
   const activeHep = HEP_CONTENT.find(hep => hep.id === activeTab);
 
