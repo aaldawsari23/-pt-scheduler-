@@ -59,22 +59,22 @@ export const HEP_CONTENT: HepContent[] = [
       {
         name: 'رفع الحاجبين',
         description: ['ارفع حاجبيك لأعلى قدر الإمكان، كأنك متفاجئ. حافظ على هذه الوضعية لمدة 10-15 ثانية ثم استرخ. كرر التمرين 10 مرات.'],
-        image: '/exercises/eyebrowrise.png'
+        image: '/exercsies/eyebrowrise.png'
       },
       {
         name: 'إغماض العينين بقوة',
         description: ['أغمض عينيك بقوة مع شد العضلات المحيطة بهما. حافظ على هذه الوضعية لمدة 10 ثوانٍ ثم استرخ تمامًا. كرر التمرين 10 مرات.'],
-        image: '/exercises/eyeclose.png'
+        image: '/exercsies/eyeclose.png'
       },
       {
         name: 'الابتسامة العريضة',
         description: ['ابتسم ابتسامة عريضة قدر الإمكان مع إظهار أسنانك. حاول أن ترفع زوايا فمك للأعلى. حافظ على الوضعية 10 ثوانٍ. كرر 10 مرات.'],
-        image: '/exercises/smile.png'
+        image: '/exercsies/smile.png'
       },
       {
         name: 'نفخ الخدين',
         description: ['املأ فمك بالهواء وانفخ خديك. حافظ على شفتيك مغلقتين بإحكام. استمر لمدة 10 ثوانٍ ثم أخرج الهواء ببطء. كرر 5 مرات.'],
-        image: '/exercises/chickblow.png'
+        image: '/exercsies/chickblow.png'
       }
     ],
   },
@@ -92,17 +92,17 @@ export const HEP_CONTENT: HepContent[] = [
         {
             name: 'سحب الركبة إلى الصدر',
             description: ['استلقِ على ظهرك مع ثني الركبتين. اسحب ركبة واحدة بلطف نحو صدرك باستخدام يديك. حافظ على الوضعية لمدة 20-30 ثانية. كرر 3 مرات لكل ساق.'],
-            image: '/exercises/kneetochest.png'
+            image: '/exercsies/kneetochest.png'
         },
         {
             name: 'تمرين الجسر (Bridge)',
             description: ['استلقِ على ظهرك مع ثني الركبتين والقدمين على الأرض. ارفع وركيك ببطء عن الأرض حتى يشكل جسمك خطًا مستقيمًا من كتفيك إلى ركبتيك. حافظ على الوضعية 5 ثوانٍ ثم انزل ببطء. كرر 12 مرة.'],
-            image: '/exercises/briddging.png'
+            image: '/exercsies/briddging.png'
         },
         {
             name: 'إطالة الظهر (Cat-Cow)',
             description: ['ابدأ على يديك وركبتيك. قم بتقويس ظهرك للأعلى (مثل القطة) مع سحب بطنك للداخل. ثم، قم بخفض ظهرك ببطء مع رفع رأسك وصدرك للأعلى (وضعية البقرة). كرر الحركة ببطء 10-15 مرة.'],
-            image: '/exercises/catcamel.png'
+            image: '/exercsies/catcamel.png'
         }
     ],
   },
@@ -120,17 +120,17 @@ export const HEP_CONTENT: HepContent[] = [
         {
             name: 'رفع الساق المستقيمة',
             description: ['استلقِ على ظهرك مع ثني إحدى الركبتين. ارفع الساق الأخرى بشكل مستقيم حوالي 20-30 سم عن الأرض. حافظ على الوضعية لمدة 5 ثوانٍ ثم انزل ببطء. كرر 10-15 مرة لكل ساق.'],
-            image: '/exercises/slr.png'
+            image: '/exercsies/slr.png'
         },
         {
             name: 'القرفصاء الجزئي (Mini Squat)',
             description: ['قف مستندًا على حائط مع مباعدة قدميك بعرض الكتفين. انزل ببطء كأنك تجلس على كرسي، حتى تصل إلى زاوية 45 درجة في الركبة. حافظ على ظهرك مستقيمًا. استمر 5 ثوانٍ ثم اصعد ببطء. كرر 10 مرات.'],
-            image: '/exercises/minisquat.png'
+            image: '/exercsies/minisquat.png'
         },
         {
             name: 'شد العضلة الرباعية (Isometric Quad)',
             description: ['اجلس مع مد ساقك بشكل مستقيم. شد عضلة الفخذ الأمامية بأقصى قوة ممكنة دون تحريك الساق. استمر في الشد لمدة 5-10 ثوانٍ ثم استرخ. كرر 10 مرات.'],
-            image: '/exercises/isometricquad.png'
+            image: '/exercsies/isometricquad.png'
         }
     ],
   },
@@ -148,17 +148,17 @@ export const HEP_CONTENT: HepContent[] = [
         {
             name: 'سحب الذقن (Chin Tuck)',
             description: ['اجلس أو قف بشكل مستقيم. اسحب رأسك وذقنك للخلف بشكل مستقيم، كأنك تصنع ذقنًا مزدوجًا، دون إمالة رأسك للأسفل. ستشعر بشد في مؤخرة الرقبة. حافظ على الوضعية 5 ثوانٍ. كرر 10 مرات.'],
-            image: '/exercises/chintuck.png'
+            image: '/exercsies/chintuck.png'
         },
         {
             name: 'إطالة الرقبة الجانبية',
             description: ['اجلس بشكل مستقيم. قم بإمالة رأسك بلطف نحو كتفك الأيمن. يمكنك استخدام يدك اليمنى لزيادة الشد بلطف. ستشعر بشد في الجانب الأيسر من رقبتك. حافظ على الوضعية 20-30 ثانية. كرر للجهة الأخرى.'],
-            image: '/exercises/stretchneck.png'
+            image: '/exercsies/stretchneck.png'
         },
         {
             name: 'تدوير الرقبة (Neck Rotation)',
             description: ['اجلس بشكل مستقيم. أدر رأسك ببطء إلى اليمين قدر الإمكان دون الشعور بألم. حافظ على الوضعية 5 ثوانٍ ثم عد ببطء إلى المركز. كرر للجهة اليسرى. قم بأداء 5 تكرارات لكل جانب.'],
-            image: '/exercises/neckrotation.png'
+            image: '/exercsies/neckrotation.png'
         }
     ],
   }
