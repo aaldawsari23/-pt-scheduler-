@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { getStartOfWeek, addDays, toHijriDateString, toGregorianTimeString } from '../../utils/dateUtils';
@@ -18,20 +17,24 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, setCurrentDate, setVie
   const weekDayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 
   return (
-    <div className="grid grid-cols-5 h-full">
+    <div className="grid grid-cols-5 h-full" data-view="week-view">
       {days.map((day, index) => {
         const appointmentsOnDay = appointments.filter(a => new Date(a.start).toDateString() === day.toDateString());
         const isToday = new Date().toDateString() === day.toDateString();
         const hijriDateStr = toHijriDateString(day);
+        const loadPercent = Math.min(100, (appointmentsOnDay.length / 20) * 100); // assume 20 max per day
         
         return (
           <div 
             key={index} 
-            className={`border-e border-b border-slate-200 flex flex-col cursor-pointer hover:bg-slate-50`}
+            className="border-e border-b border-slate-200 flex flex-col cursor-pointer hover:bg-slate-50 transition-all duration-200 hover:shadow-inner group"
             onClick={() => { setCurrentDate(day); setView('day' as ViewType.Day); }}
           >
-            <div className={`p-2 border-b border-slate-200 ${isToday ? 'bg-sky-100' : 'bg-white'}`}>
-              <div className="flex justify-between items-baseline">
+            <div className={`relative p-2 border-b border-slate-200 ${isToday ? 'bg-sky-100' : 'bg-white'} transition-colors`}>
+              <div className="absolute bottom-0 left-0 h-1 bg-sky-500 transition-all duration-300"
+                   style={{ width: `${loadPercent}%` }}
+              />
+              <div className="flex justify-between items-baseline relative z-10">
                 <span className="font-semibold text-slate-600">{weekDayNames[day.getDay()]}</span>
                 <span className={`text-xl font-bold ${isToday ? 'text-sky-600' : 'text-slate-800'}`}>{day.getDate()}</span>
               </div>
@@ -40,16 +43,19 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, setCurrentDate, setVie
             <div className="p-2 space-y-1.5 flex-grow overflow-y-auto">
               {appointmentsOnDay.length > 0 ? (
                 appointmentsOnDay.slice(0, 7).map(app => (
-                  <div key={app.id} className="flex items-center gap-1.5 text-xs truncate" title={`ملف رقم: ${app.fileNo}`}>
-                    <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+                  <div key={app.id} 
+                       className="flex items-center gap-1.5 text-xs truncate hover:bg-slate-100 px-1 py-0.5 rounded transition-colors animate-slideIn"
+                       style={{ animationDelay: `${appointmentsOnDay.indexOf(app) * 50}ms` }}
+                       title={`ملف رقم: ${app.fileNo}`}>
+                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                     <span className="text-slate-800 font-medium">{app.fileNo}</span>
                     <span className="text-slate-500 ms-auto">{toGregorianTimeString(new Date(app.start))}</span>
                   </div>
                 ))
               ) : (
-                <div className="text-center text-slate-400 text-sm pt-4 select-none">فارغ</div>
+                <div className="text-center text-slate-400 text-sm pt-4 select-none opacity-50 group-hover:opacity-100 transition-opacity">فارغ</div>
               )}
-               {appointmentsOnDay.length > 7 && <div className="text-center text-xs text-slate-500 mt-1 font-semibold">+{appointmentsOnDay.length - 7} المزيد</div>}
+               {appointmentsOnDay.length > 7 && <div className="text-center text-xs text-slate-500 mt-1 font-semibold bg-slate-100 rounded py-1 animate-pulse">+{appointmentsOnDay.length - 7} المزيد</div>}
             </div>
           </div>
         );

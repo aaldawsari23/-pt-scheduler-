@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, ReactNode, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import type { Provider, Appointment, Vacation, Settings, SlotLock, Toast, ConfirmationState, TimeOff, ExtraCapacity, AuditEntry } from '../types';
 import { AuditAction } from '../types';
@@ -8,19 +7,20 @@ import { generateUniqueId } from '../utils/helpers';
 
 interface AppContextType {
   providers: Provider[];
-  setProviders: (providers: Provider[]) => void;
+  // FIX: Updated setter types to support functional updates, which is the return type from the useLocalStorage hook.
+  setProviders: React.Dispatch<React.SetStateAction<Provider[]>>;
   appointments: Appointment[];
-  setAppointments: (appointments: Appointment[]) => void;
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
   vacations: Vacation[];
-  setVacations: (vacations: Vacation[]) => void;
+  setVacations: React.Dispatch<React.SetStateAction<Vacation[]>>;
   timeOffs: TimeOff[];
-  setTimeOffs: (timeOffs: TimeOff[]) => void;
+  setTimeOffs: React.Dispatch<React.SetStateAction<TimeOff[]>>;
   extraCapacities: ExtraCapacity[];
-  setExtraCapacities: (extraCapacities: ExtraCapacity[]) => void;
+  setExtraCapacities: React.Dispatch<React.SetStateAction<ExtraCapacity[]>>;
   settings: Settings;
-  setSettings: (settings: Settings) => void;
+  setSettings: React.Dispatch<React.SetStateAction<Settings>>;
   slotLocks: SlotLock;
-  setSlotLocks: (locks: SlotLock) => void;
+  setSlotLocks: React.Dispatch<React.SetStateAction<SlotLock>>;
   toasts: Toast[];
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   confirmation: ConfirmationState;
@@ -44,6 +44,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [confirmation, setConfirmation] = useState<ConfirmationState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [auditLog, setAuditLog] = useLocalStorage<AuditEntry[]>('auditLog', []);
+
+  // Effect to merge stored settings with defaults on initial load.
+  // This acts as a simple data migration to prevent issues with outdated settings.
+  useEffect(() => {
+    setSettings(prevSettings => ({
+      ...INITIAL_SETTINGS,
+      ...prevSettings,
+    }));
+  }, []); // Runs only once on mount
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
       const id = generateUniqueId();

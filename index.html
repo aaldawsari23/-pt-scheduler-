@@ -30,63 +30,189 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8; /* slate-400 */
       }
+      
       /* --- Print Styles --- */
       @media print {
+        @page {
+          size: A4;
+          margin: 1.5cm;
+        }
+
         body {
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
+          background-color: #fff !important;
         }
-        body * {
-          visibility: hidden;
+
+        /* General resets for printing */
+        * {
+          box-shadow: none !important;
+          border-color: #dee2e6 !important;
+          color: #000 !important;
+          background-color: transparent !important;
+          transition: none !important;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 12pt;
         }
-        .printable-area, .printable-area * {
-          visibility: visible;
-        }
-        .printable-area {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          font-family: 'Times New Roman', Times, serif;
-        }
+
         .no-print {
           display: none !important;
         }
 
+        /* Reset modal styles for printing */
+        .printable-modal-container {
+          position: static !important;
+          display: block !important;
+          overflow: visible !important;
+          background: transparent !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          justify-content: flex-start !important;
+          align-items: flex-start !important;
+          backdrop-filter: none !important;
+        }
+
+        .printable-modal-content {
+          animation: none !important;
+          transform: none !important;
+          opacity: 1 !important;
+          box-shadow: none !important;
+          border: none !important;
+          max-height: none !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          height: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
         /* HEP Modal Print Styles */
         .print-container {
-            box-shadow: none !important;
-            border: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          border: none !important;
         }
+
         .content-section {
-            display: none !important;
+          display: none !important;
         }
+
         .active-print {
-            display: block !important;
-            visibility: visible !important;
+          display: block !important;
         }
-        .active-print * {
-             visibility: visible !important;
+        
+        /* Print-specific layout components */
+        .print-header {
+          display: flex !important;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 2px solid #000 !important;
+          padding-bottom: 1rem;
+          margin-bottom: 2rem;
+        }
+        .print-header img {
+            max-height: 70px;
+        }
+        .print-footer {
+          display: block !important;
+          margin-top: 2rem;
+          padding-top: 1rem;
+          border-top: 1px solid #ccc !important;
+          font-size: 9pt;
+          page-break-before: auto;
+          page-break-inside: avoid;
+        }
+
+        /* Content Styling */
+        .active-print h2, .active-print h3 {
+          color: #000 !important;
+          border-color: #ccc !important;
+        }
+        .active-print .tips-box {
+            border: 1px solid #ccc !important;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .active-print .exercise-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
         }
         .exercise-card {
+            border: 1px solid #ccc !important;
+            padding: 1rem;
+            border-radius: 8px;
             page-break-inside: avoid;
         }
-        .print-header-spacer {
-            height: 120px; 
-        }
-        .print-header {
-            display: flex !important;
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: 0;
+        .exercise-card img {
             width: 100%;
-            background-color: white;
-            z-index: 1000;
+            height: auto;
+            max-height: 180px;
+            object-fit: contain;
+            border: 1px solid #eee !important;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .exercise-card ul {
+            font-size: 10pt;
+        }
+        .exercise-card h3 {
+           font-size: 14pt;
         }
       }
+      /* Global Animations */
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; transform: scale(0.9); }
+      }
+      .animate-slideIn {
+        animation: slideIn 0.3s ease-out backwards;
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.5s ease-out backwards;
+      }
+      .animate-fadeOut {
+        animation: fadeOut 0.3s ease-out forwards;
+      }
+      /* Production Polish */
+      button, input, select, textarea {
+        transition: all 0.2s ease;
+      }
+      button:not(:disabled):hover {
+        transform: translateY(-1px);
+      }
+      button:not(:disabled):active {
+        transform: translateY(0);
+      }
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      /* Better shadows */
+      .shadow-soft {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      }
+      .shadow-hard {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      /* Glass effect */
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+      /* Smooth scrolling */
+      html { scroll-behavior: smooth; }
     </style>
   <script type="importmap">
 {

@@ -25,14 +25,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 backdrop-blur-md"
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 backdrop-blur-md printable-modal-container"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform transition-all duration-300 ease-in-out opacity-0 scale-95 animate-fade-in-scale"
+        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform transition-all duration-300 ease-in-out opacity-0 scale-95 animate-fade-in-scale printable-modal-content"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center p-5 border-b border-slate-200">
+        <div className="flex justify-between items-center p-5 border-b border-slate-200 no-print">
           <h3 className="text-xl font-semibold text-slate-800">{title}</h3>
           <button
             onClick={onClose}

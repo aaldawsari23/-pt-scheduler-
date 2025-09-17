@@ -54,7 +54,7 @@ export interface Appointment {
 }
 
 export interface Vacation {
-  id: string;
+  id:string;
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   providerId?: string | null; // null or undefined for global
@@ -87,6 +87,19 @@ export interface Settings {
   followUp3wWeeks: number;
   followUp1mMonths: number;
   customLogoB64: string | null; // To store user-uploaded logo
+  language: 'ar' | 'en';
+  // Advanced booking rules
+  urgentDaysAhead: number;
+  semiUrgentDaysAhead: number;
+  normalDaysAhead: number;
+  chronicWeeksAhead: number;
+  blockWeekends: boolean;
+  blockFridays: boolean;
+  morningStartHour: number;
+  morningEndHour: number;
+  afternoonStartHour: number;
+  afternoonEndHour: number;
+  autoDistributeBookings: boolean;
 }
 
 export interface SlotLock {
@@ -96,7 +109,7 @@ export interface SlotLock {
 export interface HepExercise {
   name: string;
   description: string[];
-  image: string; // Base64 encoded SVG/PNG
+  image: string; // Base64 encoded SVG/PNG - stored in localStorage
 }
 
 export interface HepContent {

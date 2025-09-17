@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import Modal from '../common/Modal';
@@ -181,7 +180,85 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               <div className="flex items-center justify-between"><span className="text-slate-600">إيقاف الحجز بشكل كامل</span><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked={settings.bookingLocked} onChange={(e) => setSettings({...settings, bookingLocked: e.target.checked})} className="sr-only peer" /><div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div></label></div>
               <div className="flex items-center justify-between"><span className="text-slate-600">منع الحجز قبل تاريخ:</span><input type="date" value={settings.bookingLockDate || ''} onChange={(e) => setSettings({...settings, bookingLockDate: e.target.value || null})} className="p-2 border rounded-md" disabled={settings.bookingLocked} /></div>
               <div className="flex items-center justify-between"><span className="text-slate-600">تفعيل خانة احتياطية للحالات الطارئة</span><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked={settings.urgentReserve} onChange={(e) => setSettings({...settings, urgentReserve: e.target.checked})} className="sr-only peer" /><div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></div>
-               {/* --- Logo Upload --- */}
+               
+              {/* Advanced Booking Rules */}
+              <div className="pt-4 border-t border-slate-200">
+                <h5 className="font-medium text-slate-700 mb-3">قواعد الحجز المتقدمة</h5>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm text-slate-600">حجز عاجل (عدد الأيام)</label>
+                    <input type="number" value={settings.urgentDaysAhead} 
+                           onChange={(e) => setSettings({...settings, urgentDaysAhead: parseInt(e.target.value) || 1})} 
+                           className="w-full p-2 border rounded-md mt-1" min="1" max="30" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-600">شبه عاجل (عدد الأيام)</label>
+                    <input type="number" value={settings.semiUrgentDaysAhead} 
+                           onChange={(e) => setSettings({...settings, semiUrgentDaysAhead: parseInt(e.target.value) || 3})} 
+                           className="w-full p-2 border rounded-md mt-1" min="1" max="60" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-600">اعتيادي (عدد الأيام)</label>
+                    <input type="number" value={settings.normalDaysAhead} 
+                           onChange={(e) => setSettings({...settings, normalDaysAhead: parseInt(e.target.value) || 30})} 
+                           className="w-full p-2 border rounded-md mt-1" min="1" max="365" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-600">مزمن (عدد الأسابيع)</label>
+                    <input type="number" value={settings.chronicWeeksAhead} 
+                           onChange={(e) => setSettings({...settings, chronicWeeksAhead: parseInt(e.target.value) || 8})} 
+                           className="w-full p-2 border rounded-md mt-1" min="1" max="52" />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <label className="text-sm text-slate-600">وقت بداية الصباح</label>
+                    <input type="number" value={settings.morningStartHour} 
+                           onChange={(e) => setSettings({...settings, morningStartHour: parseFloat(e.target.value) || 8})} 
+                           className="w-full p-2 border rounded-md mt-1" min="6" max="12" step="0.5" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-600">وقت نهاية الصباح</label>
+                    <input type="number" value={settings.morningEndHour} 
+                           onChange={(e) => setSettings({...settings, morningEndHour: parseFloat(e.target.value) || 12})} 
+                           className="w-full p-2 border rounded-md mt-1" min="10" max="14" step="0.5" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-600">وقت بداية المساء</label>
+                    <input type="number" value={settings.afternoonStartHour} 
+                           onChange={(e) => setSettings({...settings, afternoonStartHour: parseFloat(e.target.value) || 12})} 
+                           className="w-full p-2 border rounded-md mt-1" min="12" max="16" step="0.5" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-606">وقت نهاية المساء</label>
+                    <input type="number" value={settings.afternoonEndHour} 
+                           onChange={(e) => setSettings({...settings, afternoonEndHour: parseFloat(e.target.value) || 15.5})} 
+                           className="w-full p-2 border rounded-md mt-1" min="14" max="20" step="0.5" />
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-sm text-slate-600">توزيع تلقائي للحجوزات</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={settings.autoDistributeBookings} 
+                           onChange={(e) => setSettings({...settings, autoDistributeBookings: e.target.checked})} 
+                           className="sr-only peer" />
+                    <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-sm text-slate-600">حجب أيام الجمعة</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={settings.blockFridays} 
+                           onChange={(e) => setSettings({...settings, blockFridays: e.target.checked})} 
+                           className="sr-only peer" />
+                    <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                  </label>
+                </div>
+              </div>
+              
+              {/* --- Logo Upload --- */}
               <div className="pt-4 border-t border-slate-200">
                 <span className="text-slate-600 font-medium">شعار التطبيق</span>
                 <div className="flex items-center gap-4 mt-2">
@@ -209,6 +286,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 <div><label className="text-sm text-slate-500">التخصص</label><select value={p.specialty} onChange={e => handleProviderChange(p.id, 'specialty', e.target.value as Specialty)} className="p-2 border border-slate-300 rounded-md w-full mt-1 bg-white focus:ring-blue-500 focus:border-blue-500">{Object.values(Specialty).filter(s => s !== Specialty.All).map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                 <div><label className="text-sm text-slate-500">الطاقة الاستيعابية</label><input type="number" value={p.dailyCapacity} onChange={e => handleProviderChange(p.id, 'dailyCapacity', parseInt(e.target.value) || 0)} className="p-2 border border-slate-300 rounded-md w-full mt-1 focus:ring-blue-500 focus:border-blue-500" /></div>
                 <div><label className="text-sm text-slate-500">أيام العيادات</label><div className="flex items-center gap-2 mt-2">{['ح', 'ن', 'ث', 'ر', 'خ'].map((day, index) => (<button key={index} onClick={() => { const newDays = p.days.includes(index) ? p.days.filter(d => d !== index) : [...p.days, index]; handleProviderChange(p.id, 'days', newDays); }} className={`w-8 h-8 rounded-full text-sm font-bold ${p.days.includes(index) ? 'bg-blue-600 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}`}>{day}</button>))}</div></div>
+              </div>
+              <div className="flex items-center gap-4 pt-2 border-t">
+                <label className="text-sm text-slate-500">خانات إضافية مؤقتة</label>
+                {extraCapacities.filter(ec => ec.providerId === p.id).map(ec => (
+                  <div key={ec.id} className="flex items-center gap-2 bg-amber-50 px-2 py-1 rounded">
+                    <span className="text-xs">{ec.date}</span>
+                    <span className="text-xs font-bold text-amber-600">+{ec.slots}</span>
+                    <button onClick={() => setLocalExtraCapacities(prev => prev.filter(e => e.id !== ec.id))} 
+                            className="text-red-500 hover:text-red-700">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           ))}

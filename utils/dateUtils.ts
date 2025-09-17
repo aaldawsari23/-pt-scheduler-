@@ -50,13 +50,12 @@ export const toGregorianDateString = (date: Date, options?: Intl.DateTimeFormatO
         const formatter = new Intl.DateTimeFormat('ar-SA', defaultOptions);
         return formatter.format(date);
     } catch (e) {
-        console.error("Gregorian date formatting with ar-SA locale failed.", e);
-        // Fallback to a simple, non-locale specific format that uses Latin numerals
-        return new Intl.DateTimeFormat('en-CA', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).format(date); // YYYY-MM-DD
+        console.error("Gregorian date formatting with 'ar-SA' locale failed. Using manual fallback.", e);
+        // Fallback to a robust, manual, universally-compatible format (YYYY-MM-DD)
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 }
 
@@ -80,15 +79,14 @@ export const toGregorianDateTimeString = (date: Date, options?: Intl.DateTimeFor
         const formatter = new Intl.DateTimeFormat('ar-SA', defaultOptions);
         return formatter.format(date).replace('،', ''); // remove comma between date and time
     } catch (e) {
-        console.error("Gregorian date-time formatting with ar-SA locale failed.", e);
-        return new Intl.DateTimeFormat('en-CA', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        }).format(date).replace(',', '');
+        console.error("Gregorian date-time formatting with 'ar-SA' locale failed. Using manual fallback.", e);
+        // Fallback to a robust, manual, universally-compatible format (YYYY-MM-DD HH:mm)
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
     }
 }
 
