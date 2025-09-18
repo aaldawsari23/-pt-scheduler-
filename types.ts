@@ -100,6 +100,7 @@ export interface Settings {
   afternoonStartHour: number;
   afternoonEndHour: number;
   autoDistributeBookings: boolean;
+  hideOutsideMonthDays: boolean;
 }
 
 export interface SlotLock {

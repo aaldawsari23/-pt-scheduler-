@@ -1,0 +1,414 @@
+/* Tailwind CSS - Core styles for production build */
+@import 'tailwindcss';
+
+/* Local font - Arabic support with system fallbacks */
+
+body {
+  font-family: 'Tajawal', 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+}
+
+/* UX/UI Enhancements */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
+}
+
+/* Enhanced animations */
+@keyframes slideInTop {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.animate-slideInTop {
+  animation: slideInTop 0.4s ease-out backwards;
+}
+
+.animate-bounceIn {
+  animation: bounceIn 0.6s ease-out;
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Print Styles - Professional A4 Printing */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 2cm 1.5cm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-color: #fff !important;
+    font-family: 'Tajawal', 'Arial', sans-serif;
+    line-height: 1.4;
+  }
+
+  /* General resets for printing */
+  * {
+    box-shadow: none !important;
+    border-color: #333 !important;
+    color: #000 !important;
+    background-color: transparent !important;
+    transition: none !important;
+    font-family: 'Tajawal', 'Arial', sans-serif;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset modal styles for printing */
+  .printable-modal-container {
+    position: static !important;
+    display: block !important;
+    overflow: visible !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    backdrop-filter: none !important;
+  }
+
+  .printable-modal-content {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    box-shadow: none !important;
+    border: none !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* HEP Modal Print Styles */
+  .print-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none !important;
+  }
+
+  .content-section {
+    display: none !important;
+  }
+
+  .active-print {
+    display: block !important;
+  }
+  
+  /* Professional print header */
+  .print-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #1e40af !important;
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    page-break-after: avoid;
+  }
+
+  .print-header img {
+    max-height: 80px;
+    width: auto;
+  }
+
+  .print-header h1 {
+    font-size: 18pt !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+  }
+
+  .print-header p {
+    font-size: 12pt !important;
+    margin: 0.2rem 0 !important;
+  }
+
+  .print-header h2 {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+  }
+
+  /* Professional print footer */
+  .print-footer {
+    display: block !important;
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 2px solid #1e40af !important;
+    font-size: 10pt;
+    page-break-inside: avoid;
+    position: absolute;
+    bottom: 2cm;
+    left: 0;
+    right: 0;
+  }
+
+  /* Professional content styling */
+  .active-print {
+    page-break-after: always;
+    position: relative;
+    min-height: 100vh;
+    padding-bottom: 4cm; /* Space for footer */
+  }
+
+  .active-print h2 {
+    color: #1e40af !important;
+    font-size: 20pt !important;
+    font-weight: bold !important;
+    margin-bottom: 1.5rem !important;
+    text-align: center;
+    border-bottom: 2px solid #1e40af !important;
+    padding-bottom: 0.5rem;
+  }
+
+  .active-print .tips-box {
+    background-color: #f8fafc !important;
+    border: 2px solid #1e40af !important;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    page-break-inside: avoid;
+  }
+
+  .active-print .tips-box h3 {
+    color: #1e40af !important;
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .active-print .tips-box ul {
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+    padding-right: 1.5rem !important;
+  }
+
+  .active-print .tips-box li {
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Exercise grid layout */
+  .active-print .exercise-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .exercise-card {
+    border: 2px solid #e2e8f0 !important;
+    padding: 1rem;
+    border-radius: 8px;
+    page-break-inside: avoid;
+    background-color: #fefefe !important;
+  }
+
+  .exercise-card h3 {
+    color: #1e40af !important;
+    font-size: 13pt !important;
+    font-weight: bold !important;
+    margin-bottom: 0.8rem !important;
+    text-align: center;
+  }
+
+  .exercise-card img {
+    width: 100%;
+    height: auto;
+    max-height: 140px;
+    min-height: 100px;
+    object-fit: contain;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px;
+    margin-bottom: 0.8rem;
+    background-color: #f8fafc !important;
+  }
+
+  .exercise-card ul {
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding-right: 1.2rem !important;
+  }
+
+  .exercise-card li {
+    margin-bottom: 0.3rem !important;
+  }
+
+  /* Footer disclaimer styling */
+  .print-footer h3 {
+    color: #1e40af !important;
+    font-size: 12pt !important;
+    font-weight: bold !important;
+    margin-bottom: 0.8rem !important;
+  }
+
+  .print-footer p {
+    font-size: 9pt !important;
+    line-height: 1.3 !important;
+    margin-bottom: 0.5rem !important;
+    text-align: justify;
+  }
+
+  /* Month View Print Styles */
+  [data-view="month-view"] .print-only-title {
+    display: block !important;
+    text-align: center;
+    font-size: 16pt;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+
+  [data-view="month-view"] .grid {
+    border: none !important;
+  }
+
+  [data-view="month-view"] .grid > div {
+    border-color: #ccc !important;
+    min-height: 6em;
+  }
+
+  [data-view="month-view"] .auto-rows-fr {
+      grid-auto-rows: min-content;
+  }
+}
+
+/* Global Animations */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; transform: scale(0.9); }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out backwards;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out backwards;
+}
+
+.animate-fadeOut {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+/* Production Polish */
+button, input, select, textarea {
+  transition: all 0.2s ease;
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Better shadows */
+.shadow-soft {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.shadow-hard {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Glass effect */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Smooth scrolling */
+html { 
+  scroll-behavior: smooth; 
+}
+
+/* Accessibility improvements */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Loading states */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

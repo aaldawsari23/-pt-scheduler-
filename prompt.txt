@@ -1,0 +1,101 @@
+ROLE
+You are a senior TypeScript/React engineer working in a Vite SPA. Work surgically in this repo. Diagnose and fix Month view issues first, then add visual polish and propose prioritized enhancements. Build and sanity-check between steps. Keep diffs minimal.
+
+REPO CONTEXT
+- Tooling: Vite 6, React 19, TypeScript 5.8
+- Entry: index.html (Tailwind via CDN), index.tsx (mounts App component)
+- App: App.tsx -> components/Scheduler.tsx -> components/views/Calendar.tsx
+- Calendar.tsx inlines DayView, WeekView, MonthView
+- State: context/AppContext.tsx (useLocalStorage powered); settings include blockFridays, blockWeekends, language, hours, distribution, etc.
+- Types and constants: types.ts, constants.ts
+- Utilities: utils/dateUtils.ts (getStartOfWeek, toGregorian*, toHijriDateString, addDays, addWeeks, addMonths)
+- Build scripts: npm run build, npm run dev
+
+PRIMARY GOALS
+P1 Month View Reliability
+- Ensure Month view uses settings blockFridays and blockWeekends correctly to disable only those days.
+- Clicking a non blocked day sets currentDate and changes view to Day.
+- Headers reflect blocked days visually.
+- Weekday labels respect current language ar or en.
+- No regressions to Day and Week views, keep performance smooth.
+
+P1 Visual Polish
+- Add tooltips and ARIA for Month cells showing Gregorian and Hijri.
+- Clear styling for outside current month days.
+- Smooth hover and focus states in line with existing Tailwind styling.
+
+P2 Enhancements
+- Month cell appointment indicators (dots).
+- Hover preview list of a few appointments.
+- Lightweight keyboard navigation (arrow keys and Enter).
+- Small legend for color codes and weekend blocks.
+
+P3 Enhancements
+- Optional hide outside month days.
+- Improved printing for Month.
+- Simple accessibility refinements.
+- Small self check script if helpful.
+
+ACCEPTANCE CRITERIA
+- Month view disables only configured blocked days; others are clickable.
+- Clicking a non blocked day navigates to Day view for that date.
+- Week and Month headers reflect language and blocked day styling accurately.
+- No console errors in dev; build passes.
+- Visual polish consistent with existing design (animations, shadows, focus).
+
+PLAN OF ACTION
+- Phase 0 Repo scan and quick inventory.
+- Phase 1 P1 Fixes in components/views/Calendar.tsx
+  - Correct blocked day logic using settings blockFridays and blockWeekends.
+  - Ensure header styling matches blocked days.
+  - Language aware weekday labels for Week and Month.
+  - Add tooltips and ARIA labels for Month cells.
+  - Keep diffs minimal and style consistent.
+  - If a missing toggle exists for blockWeekends in components/modals/SettingsModal.tsx, add it minimally.
+- Phase 2 Build and validate
+  - Run npm run build.
+  - Manual sanity if possible: run dev, verify Month to Day click behavior; toggle settings in Settings modal and confirm behavior; check console.
+- Phase 3 P2 Features
+  - Add month appointment dots and hover preview with smooth performance.
+  - Re build and validate.
+- Phase 4 P3 Features
+  - Add keyboard navigation (arrow keys and Enter), or hide outside month toggle in settings.
+  - Re build and validate.
+- Phase 5 Summarize changes, test instructions, next recommendations.
+
+EDITING GUIDELINES
+- Modify only what is necessary; do not change dependencies or tooling.
+- Keep code in Calendar.tsx consistent with app style.
+- Keep SettingsModal.tsx aligned with existing settings UX if adding toggles.
+- Do not introduce a service worker or new build tools.
+- Maintain RTL or LTR and Arabic or English behavior.
+
+TESTING
+- Primary: npm run build must succeed each phase.
+- Manual checks in dev if possible
+  - Toggle blockWeekends and blockFridays in Settings -> Scheduling and verify Month grid interactivity and header highlights.
+  - Click several non blocked days and ensure Day view opens on the correct date.
+  - Switch language and verify weekday header labels.
+- Optional: add a tiny no deps self check script (scripts/selfcheck.mjs) to validate date utils fallbacks and wire as npm script selfcheck.
+
+DELIVERABLES
+- A brief plan outlining P1, P2, P3 tasks.
+- Minimal patch diffs for P1 and P2 if implemented, with file paths and changed lines.
+- Confirmation that npm run build succeeds after changes.
+- Short how to verify steps for Month view.
+- Short list of next recommendations.
+
+EXECUTION
+- Print the short plan first P1, P2, P3.
+- Implement P1 changes in components/views/Calendar.tsx (blocked day logic, header styling, language labels, ARIA and tooltips). If needed, add the blockWeekends toggle to components/modals/SettingsModal.tsx.
+- Run npm run build and fix any errors.
+- Describe where code changed and why using file and line pointers.
+- If time allows, implement P2 appointment indicators and hover preview and rebuild.
+- Output final patch diffs, build status, and test steps.
+
+IMPORTANT NOTES
+- Do not add libraries, service workers, or change React or Vite versions.
+- Leave Tailwind CDN usage in index.html as is.
+- Keep RTL support intact.
+- If ambiguity blocks progress, make the smallest reasonable assumption, proceed, and call it out in the summary.
+
