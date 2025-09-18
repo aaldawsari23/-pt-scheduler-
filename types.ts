@@ -139,3 +139,10 @@ export interface AuditEntry {
   end?: string;              // ISO
   details?: string;          // نص إضافي (نوع الموعد مثلاً)
 }
+
+export interface ManualBookingDefaults {
+  providerId?: string;
+  date?: string; // YYYY-MM-DD
+  time?: string; // HH:mm
+  type?: AppointmentType;
+}

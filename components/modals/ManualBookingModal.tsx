@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { useAppContext } from '../../context/AppContext';
 import { WORK_HOURS, SLOT_DURATION_MINUTES } from '../../constants';
-import { AppointmentType, AuditAction } from '../../types';
-import type { Provider } from '../../types';
+import { AppointmentType, AuditAction, type Provider, type ManualBookingDefaults } from '../../types';
 import { getISODateString, toGregorianTimeString, toHijriDateString, toGregorianDateString } from '../../utils/dateUtils';
 import { generateUniqueId, normalizeArabicDigits } from '../../utils/helpers';
 
 interface ManualBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaults?: ManualBookingDefaults | null;
 }
 
-const ManualBookingModal: React.FC<ManualBookingModalProps> = ({ isOpen, onClose }) => {
+const ManualBookingModal: React.FC<ManualBookingModalProps> = ({ isOpen, onClose, defaults }) => {
   const { providers, appointments, setAppointments, showToast, logAudit } = useAppContext();
   const [selectedProviderId, setSelectedProviderId] = useState('');
   const [selectedDate, setSelectedDate] = useState(getISODateString(new Date()));
@@ -35,8 +35,24 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({ isOpen, onClose
     const bookedTimes = appointments
       .filter(a => a.providerId === selectedProviderId && getISODateString(new Date(a.start)) === selectedDate)
       .map(a => toGregorianTimeString(new Date(a.start)));
+    
+    // If a default time is provided (editing/booking a specific slot), ensure it's not in the booked list
+    // unless it is the one being edited. But here we just show what's available.
+    // The defaults?.time is mostly for pre-selection, not for showing an already booked slot as available.
     return timeSlots.filter(slot => !bookedTimes.includes(slot));
   }, [selectedProviderId, selectedDate, appointments, timeSlots]);
+
+
+  useEffect(() => {
+    if (isOpen) {
+        // Reset form state when modal opens, using defaults if available
+        setFileNo('');
+        setSelectedProviderId(defaults?.providerId || '');
+        setSelectedDate(defaults?.date || getISODateString(new Date()));
+        setSelectedTime(defaults?.time || '');
+        setAppointmentType(defaults?.type || AppointmentType.Normal);
+    }
+  }, [isOpen, defaults]);
   
   const handleBook = () => {
     if (!selectedProviderId || !selectedDate || !selectedTime || !fileNo.trim()) {
@@ -75,11 +91,6 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({ isOpen, onClose
     });
     
     onClose();
-    // Reset form state
-    setFileNo('');
-    setSelectedProviderId('');
-    setSelectedTime('');
-    setSelectedDate(getISODateString(new Date()));
   };
   
   return (
@@ -93,6 +104,7 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({ isOpen, onClose
             onChange={(e) => setFileNo(normalizeArabicDigits(e.target.value))}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="أدخل رقم الملف"
+            autoFocus
           />
         </div>
         
@@ -133,6 +145,11 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({ isOpen, onClose
               {availableTimeSlots.map(time => (
                 <option key={time} value={time}>{time}</option>
               ))}
+              {defaults?.time && !availableTimeSlots.includes(defaults.time) && (
+                <option key={defaults.time} value={defaults.time} disabled>
+                  {defaults.time} (محجوز)
+                </option>
+              )}
             </select>
           </div>
         </div>

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import Modal from '../common/Modal';
-import type { Provider, Vacation, TimeOff, ExtraCapacity, AuditEntry } from '../../types';
-import { Specialty } from '../../types';
+import { Specialty, type Provider, type Vacation, type TimeOff, type ExtraCapacity, type AuditEntry } from '../../types';
 import { generateUniqueId, exportToJson, exportToCsv, transliterate } from '../../utils/helpers';
 import { getISODateString, toGregorianDateTimeString, toGregorianTimeString } from '../../utils/dateUtils';
 import { ASEER_LOGO_URL } from '../../constants';

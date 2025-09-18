@@ -1,7 +1,6 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import type { Provider, Appointment, Vacation, Settings, SlotLock, Toast, ConfirmationState, TimeOff, ExtraCapacity, AuditEntry } from '../types';
-import { AuditAction } from '../types';
+import { AuditAction, type Provider, type Appointment, type Vacation, type Settings, type SlotLock, type Toast, type ConfirmationState, type TimeOff, type ExtraCapacity, type AuditEntry } from '../types';
 import { INITIAL_PROVIDERS, INITIAL_SETTINGS } from '../constants';
 import { generateUniqueId } from '../utils/helpers';
 
