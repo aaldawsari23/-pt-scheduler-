@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import Modal from '../common/Modal';
 import { Specialty, type Provider, type Vacation, type TimeOff, type ExtraCapacity, type AuditEntry, type EmergencyLogEntry } from '../../types';
-import { generateUniqueId, exportToJson, exportToCsv, transliterate } from '../../utils/helpers';
+import { generateUniqueId, exportToCsv, transliterate } from '../../utils/helpers';
 import { getISODateString, toGregorianDateTimeString, toGregorianTimeString } from '../../utils/dateUtils';
-import { ASEER_LOGO_URL } from '../../constants';
 
 interface SettingsModalProps {
   isOpen: boolean;

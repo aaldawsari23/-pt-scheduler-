@@ -1,0 +1,29 @@
+
+:root{
+  --bg:#f8fafc;
+  --panel:#ffffff;
+  --text:#0f172a;
+  --muted:#475569;
+  --line:#e2e8f0;
+  --brand:#0ea5e9; /* هادئ ومحايد */
+  --brand-2:#14b8a6;
+}
+html,body,#root{height:100%}
+body{background:var(--bg); color:var(--text)}
+/* أزرار متجاوبة */
+button{touch-action:manipulation}
+@media (max-width:768px){
+  .grid-cols-auto{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* بطاقات محايدة، حدود خفيفة */
+.card{background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:0 1px 2px rgba(15,23,42,.04)}
+/* ألوان خفيفة للتخصصات */
+.badge-msk{background:rgba(20,184,166,.12); color:#0f766e; border:1px solid rgba(20,184,166,.2); padding:.125rem .5rem; border-radius:999px; font-weight:600}
+.badge-neuro{background:rgba(14,165,233,.12); color:#075985; border:1px solid rgba(14,165,233,.2); padding:.125rem .5rem; border-radius:999px; font-weight:600}
+.badge-cardio{background:rgba(99,102,241,.12); color:#3730a3; border:1px solid rgba(99,102,241,.2); padding:.125rem .5rem; border-radius:999px; font-weight:600}
+/* أزرار عامة */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:.5rem .75rem;border:1px solid var(--line);border-radius:.75rem;background:#fff;font-weight:600}
+.btn:hover{background:#f8fafc}
+.btn.primary{border-color:color-mix(in oklab, var(--brand) 35%, #0000); background:linear-gradient(#fff, #f9fafb)}
+/* شريط علوي */
+header{box-shadow:0 1px 0 var(--line)}

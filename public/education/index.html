@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient Education</title>
+  <style>
+    body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin:24px}
+    a{display:inline-block;margin:8px 8px 0 0;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;text-decoration:none;color:#0f172a}
+    a:hover{background:#f8fafc}
+    .muted{color:#64748b}
+  </style>
+</head>
+<body>
+  <h1>Patient Education (Fallback)</h1>
+  <p class="muted">This page opens when PDFs aren’t available yet. Replace links with your final PDFs.</p>
+  <div>
+    <a href="./neck-pain.pdf" target="_blank" rel="noopener">Neck-Pain PDF</a>
+    <a href="./lbp.pdf" target="_blank" rel="noopener">LBP PDF</a>
+    <a href="./knee-oa.pdf" target="_blank" rel="noopener">Knee-OA PDF</a>
+    <a href="./bells-palsy.pdf" target="_blank" rel="noopener">Bells Palsy PDF</a>
+  </div>
+  <script>
+    // auto-jump if query present
+    const q = new URLSearchParams(location.search).get('type');
+    if(q){
+      const map = { 
+        'neck-pain': './neck-pain.pdf', 
+        'lbp': './lbp.pdf', 
+        'knee-oa': './knee-oa.pdf',
+        'bells-palsy': './bells-palsy.pdf'
+      };
+      const url = map[q];
+      if(url) window.location.href = url;
+    }
+  </script>
+</body>
+</html>

@@ -6,7 +6,8 @@ import MonthView from './views/MonthView';
 import { useAppContext } from '../context/AppContext';
 import { addDays, addWeeks, addMonths, getISODateString, toGregorianDateString, getStartOfWeek, toHijriDateString, toGregorianTimeString } from '../utils/dateUtils';
 import SettingsModal from './modals/SettingsModal';
-import { ASEER_LOGO_URL, SLOT_DURATION_MINUTES } from '../constants';
+import HomeExercisesModal from './modals/HomeExercisesModal';
+import { SLOT_DURATION_MINUTES } from '../constants';
 import Modal from './common/Modal';
 import { generateUniqueId } from '../utils/helpers';
 import { findNextAvailableSlot } from './views/ProviderView';
@@ -36,13 +37,12 @@ const Scheduler: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState(false);
   const [isFabOpen, setIsFabOpen] = useState(false);
+  const [isHepModalOpen, setIsHepModalOpen] = useState(false);
   
   // State for the new FAB Quick Book feature
   const [fabFileNo, setFabFileNo] = useState('');
   const [fabSpecialty, setFabSpecialty] = useState<Specialty>(Specialty.All);
   
-  const logo = ASEER_LOGO_URL;
-
   useEffect(() => {
     document.documentElement.lang = 'ar';
     document.documentElement.dir = 'rtl';
@@ -298,7 +298,7 @@ const Scheduler: React.FC = () => {
     <div className="flex flex-col h-screen bg-slate-100 font-sans text-slate-800">
       <header className="bg-blue-800 text-white p-2 flex justify-between items-center shadow-lg no-print flex-shrink-0 flex-wrap gap-y-2">
         <div className="flex items-center gap-2 sm:gap-4">
-          <img src={logo} alt="شعار" className="h-10 w-10 sm:h-12 sm:w-12 object-contain bg-white/20 rounded-full p-1" />
+          <img src="/logo.svg" alt="شعار مركز التأهيل" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
           <div>
             <h1 className="text-base sm:text-lg font-bold">مستشفى الملك عبدالله - بيشه</h1>
             <h2 className="text-xs sm:text-sm opacity-80">مركز التأهيل الطبي - قسم العلاج الطبيعي</h2>
@@ -315,6 +315,13 @@ const Scheduler: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-1 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setIsHepModalOpen(true)}
+              className="inline-flex items-center px-3 py-2 rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 text-sm font-medium"
+            >
+              التمارين المنزلية
+            </button>
             <button onClick={() => setIsSettingsModalOpen(true)} className="p-2 rounded-full hover:bg-black/20 transition-all" title="الإعدادات">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
@@ -454,6 +461,7 @@ const Scheduler: React.FC = () => {
       </Modal>
 
       <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+      <HomeExercisesModal open={isHepModalOpen} onClose={() => setIsHepModalOpen(false)} />
     </div>
   );
 };

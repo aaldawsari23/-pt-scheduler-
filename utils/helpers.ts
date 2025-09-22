@@ -58,3 +58,38 @@ export const exportToCsv = (data: any[], filename: string) => {
     link.click();
     document.body.removeChild(link);
 };
+
+// lightweight time helpers used by BookingBar and others
+export type SlotGenOpts = { start: string; end: string; stepMinutes?: number };
+
+const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+
+export function toMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+export function fromMinutes(total: number): string {
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${pad(h)}:${pad(m)}`;
+}
+
+export function formatSlot(hhmm: string): string {
+  // 24h "13:30" -> "1:30 PM"
+  const [h, m] = hhmm.split(":").map(Number);
+  const suffix = h >= 12 ? "PM" : "AM";
+  const hour12 = ((h + 11) % 12) + 1;
+  return `${hour12}:${pad(m)} ${suffix}`;
+}
+
+export function generateTimeSlots({ start, end, stepMinutes = 15 }: SlotGenOpts): string[] {
+  const out: string[] = [];
+  let t = toMinutes(start);
+  const stop = toMinutes(end);
+  while (t <= stop) {
+    out.push(fromMinutes(t));
+    t += stepMinutes;
+  }
+  return out;
+}

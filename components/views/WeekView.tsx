@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { addDays, getISODateString, toGregorianTimeString, toHijriDateString, toGregorianDateString } from '../../utils/dateUtils';
-import { Specialty, type Provider, type Appointment, AppointmentType, AuditAction } from '../../types';
+import { Specialty, type Provider, type Appointment, AppointmentType, AuditAction, type Settings } from '../../types';
 import { generateUniqueId, normalizeArabicDigits } from '../../utils/helpers';
 import { SLOT_DURATION_MINUTES } from '../../constants';
 
@@ -19,7 +19,7 @@ const getAppointmentColor = (type: AppointmentType) => {
     }
 }
 
-const generateTimeSlots = (settings: { morningStartHour: number, morningEndHour: number, afternoonStartHour: number, afternoonEndHour: number }): string[] => {
+const generateTimeSlots = (settings: Settings): string[] => {
     const slots: string[] = [];
     const { morningStartHour, morningEndHour, afternoonStartHour, afternoonEndHour } = settings;
     const slotIncrement = SLOT_DURATION_MINUTES / 60;
@@ -65,12 +65,13 @@ const AppointmentCard: React.FC<{ appointment: Appointment; onClick: () => void 
     );
 };
 
-const EditingSlot: React.FC<{ onSave: (fileNo: string) => void; onCancel: () => void; }> = ({ onSave, onCancel }) => {
+const EditingSlot: React.FC<{ time: string; onSave: (fileNo: string) => void; onCancel: () => void; }> = ({ time, onSave, onCancel }) => {
     const [fileNo, setFileNo] = useState('');
     const handleSave = () => { if (fileNo.trim()) onSave(fileNo.trim()); };
 
     return (
-        <div className="p-2 bg-blue-50 rounded-lg border-2 border-blue-400 shadow-lg animate-fadeIn">
+        <div className="p-3 bg-blue-50 rounded-lg border-2 border-blue-400 shadow-lg animate-fadeIn col-span-2">
+            <div className="text-center font-bold text-blue-800 mb-2 font-mono">{time}</div>
             <input
                 type="text"
                 value={fileNo}
@@ -88,11 +89,12 @@ const EditingSlot: React.FC<{ onSave: (fileNo: string) => void; onCancel: () => 
     );
 };
 
-const AvailableSlot: React.FC<{ time: string; onClick: () => void }> = ({ time, onClick }) => (
-    <button onClick={onClick} className="w-full text-center p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-700 border border-transparent hover:border-blue-300 transition-all font-mono text-sm">
+const AvailableSlotGridItem: React.FC<{ time: string; onClick: () => void }> = ({ time, onClick }) => (
+    <button onClick={onClick} className="w-full text-center p-2 rounded-md bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-700 border border-transparent hover:border-blue-300 transition-all font-mono text-xs">
         {time}
     </button>
 );
+
 
 const ProviderColumn: React.FC<{
     provider: Provider;
@@ -108,7 +110,6 @@ const ProviderColumn: React.FC<{
     const { appointments, vacations, extraCapacities, setAppointments, showToast, logAudit } = useAppContext();
 
     const dayISO = getISODateString(day);
-    const dayOfWeek = day.getDay();
     
     const appointmentsOnDay = useMemo(() => appointments
         .filter(a => a.providerId === provider.id && getISODateString(new Date(a.start)) === dayISO)
@@ -149,21 +150,43 @@ const ProviderColumn: React.FC<{
                 <span className="text-sm font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">المتاح: <span className="font-bold text-blue-600">{availableCount}</span></span>
             </div>
 
-            <div className="flex-grow overflow-y-auto p-2 space-y-1.5">
-                {timeSlots.map(time => {
-                    const appointment = appointmentsOnDay.find(a => toGregorianTimeString(new Date(a.start)) === time);
-                    if (appointment) {
-                        return <AppointmentCard key={appointment.id} appointment={appointment} onClick={() => setSelectedAppointment(appointment)} />;
-                    }
-                    if (isBookingActive) {
-                        if (editingSlot?.providerId === provider.id && editingSlot?.dayISO === dayISO && editingSlot?.time === time) {
-                            return <EditingSlot key={`${time}-edit`} onSave={handleCreateAppointment} onCancel={() => setEditingSlot(null)} />;
-                        }
-                        return <AvailableSlot key={time} time={time} onClick={() => setEditingSlot({ providerId: provider.id, dayISO, time })} />;
-                    }
-                    return null;
-                })}
-                 {!isBookingActive && appointmentsOnDay.length === 0 && <div className="text-center text-slate-400 pt-10">لا توجد مواعيد.</div>}
+            <div className="flex-grow overflow-y-auto p-2">
+                {isBookingActive ? (
+                     <>
+                        {editingSlot?.providerId === provider.id && editingSlot?.dayISO === dayISO ? (
+                            <div className="space-y-1.5">
+                                <EditingSlot
+                                    key={`${editingSlot.time}-edit`}
+                                    time={editingSlot.time}
+                                    onSave={handleCreateAppointment}
+                                    onCancel={() => setEditingSlot(null)}
+                                />
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-1.5">
+                                {timeSlots
+                                    .filter(time => !bookedSlots.has(time))
+                                    .map(time => (
+                                        <AvailableSlotGridItem
+                                            key={time}
+                                            time={time}
+                                            onClick={() => setEditingSlot({ providerId: provider.id, dayISO, time })}
+                                        />
+                                ))}
+                            </div>
+                        )}
+                    </>
+                ) : (
+                     <div className="space-y-1.5">
+                        {appointmentsOnDay.length > 0 ? (
+                            appointmentsOnDay.map(appointment => (
+                                <AppointmentCard key={appointment.id} appointment={appointment} onClick={() => setSelectedAppointment(appointment)} />
+                            ))
+                        ) : (
+                            <div className="text-center text-slate-400 pt-10">لا توجد مواعيد.</div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="p-2 border-t bg-white sticky bottom-0">
@@ -233,8 +256,6 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, selectedProviderId, se
 
     return (
         <div className="flex h-full overflow-x-auto bg-slate-100 p-2 space-x-2 rtl:space-x-reverse scroll-smooth">
-            <style>{`.grid-auto-cols { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }`}</style>
-
             {selectedAppointment && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setSelectedAppointment(null)}>
                     <div className="bg-white rounded-lg shadow-xl p-6 w-80 animate-bounceIn" onClick={e => e.stopPropagation()}>
@@ -257,7 +278,7 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, selectedProviderId, se
                 if (providersForDay.length === 0 && (selectedProviderId || selectedSpecialty !== Specialty.All)) return null;
 
                 return (
-                    <div key={dayISO} className="flex-shrink-0 flex flex-col bg-white rounded-lg shadow-soft overflow-hidden border border-slate-200" style={{ width: `${Math.max(1, providersForDay.length) * 14}rem`, maxWidth: '80vw' }}>
+                    <div key={dayISO} className="flex-shrink-0 flex flex-col bg-white rounded-lg shadow-soft overflow-hidden border border-slate-200" style={{ width: `${Math.max(1, providersForDay.length) * 11}rem`, maxWidth: '80vw' }}>
                         <div className="p-3 border-b bg-slate-50 text-center sticky top-0 z-20">
                             <h3 className="font-bold text-slate-800">{['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'][dayOfWeek]}</h3>
                             <p className="text-sm text-slate-500">{toGregorianDateString(day, { day: 'numeric', month: 'short' })}</p>
