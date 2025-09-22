@@ -255,37 +255,45 @@ const Scheduler: React.FC = () => {
         </main>
       </div>
 
-      <div className="fixed bottom-4 left-4 z-40 flex flex-col-reverse items-end gap-4">
-        <div className={`transition-all duration-300 ease-in-out ${isFabOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
-          <div className="bg-white/80 backdrop-blur-md p-4 rounded-xl shadow-2xl w-72 space-y-3 border border-slate-200">
-            <h4 className="font-bold text-slate-800 text-center">حجز سريع</h4>
-            
-            <input type="text" value={fabFileNo} onChange={e => setFabFileNo(e.target.value)} placeholder="رقم الملف" className="w-full text-center p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
-            
-            <div>
-              <div className="text-xs text-slate-500 font-semibold mb-1 text-center">اختر التخصص</div>
-              <div className="grid grid-cols-4 gap-1">
-                {Object.values(Specialty).map(s => (
-                  <button key={s} onClick={() => setFabSpecialty(s)} className={`px-1 py-1 text-xs rounded-md ${fabSpecialty === s ? 'bg-blue-600 text-white' : 'bg-slate-200 hover:bg-slate-300'}`}>{s}</button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {fabActions.map(action => (
-                <button key={action.label} onClick={() => handleFabBook(action.type)} className={`flex flex-col items-center justify-center gap-1 text-white p-2 rounded-lg shadow-md text-xs font-semibold transition-transform transform hover:scale-105 ${action.style}`}>
-                   {action.icon}
-                   <span>{action.label}</span>
-                </button>
+      {/* --- Floating Action Button & Menu --- */}
+      {/* FAB Menu */}
+      <div
+        id="fab-menu"
+        className={`fixed bottom-24 left-4 z-30 transition-all duration-300 ease-in-out ${isFabOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+        aria-hidden={!isFabOpen}
+      >
+        <div className="bg-white/80 backdrop-blur-md p-4 rounded-xl shadow-2xl w-72 space-y-3 border border-slate-200">
+          <h4 className="font-bold text-slate-800 text-center">حجز سريع</h4>
+          <input type="text" value={fabFileNo} onChange={e => setFabFileNo(e.target.value)} placeholder="رقم الملف" className="w-full text-center p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"/>
+          <div>
+            <div className="text-xs text-slate-500 font-semibold mb-1 text-center">اختر التخصص</div>
+            <div className="grid grid-cols-4 gap-1">
+              {Object.values(Specialty).map(s => (
+                <button key={s} onClick={() => setFabSpecialty(s)} className={`px-1 py-1 text-xs rounded-md ${fabSpecialty === s ? 'bg-blue-600 text-white' : 'bg-slate-200 hover:bg-slate-300'}`}>{s}</button>
               ))}
             </div>
           </div>
+          <div className="grid grid-cols-3 gap-2">
+            {fabActions.map(action => (
+              <button key={action.label} onClick={() => handleFabBook(action.type)} className={`flex flex-col items-center justify-center gap-1 text-white p-2 rounded-lg shadow-md text-xs font-semibold transition-transform transform hover:scale-105 ${action.style}`}>
+                 {action.icon}
+                 <span>{action.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
-        <button onClick={() => setIsFabOpen(!isFabOpen)} className={`w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-110 active:scale-100 ${isFabOpen ? 'rotate-45' : ''}`}>
-           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-         </button>
       </div>
-
+      
+      {/* FAB Button */}
+      <button 
+        onClick={() => setIsFabOpen(!isFabOpen)} 
+        className={`fixed bottom-4 left-4 z-40 w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-110 active:scale-100 ${isFabOpen ? 'rotate-45' : ''}`}
+        aria-label={isFabOpen ? "إغلاق قائمة الحجز السريع" : "فتح قائمة الحجز السريع"}
+        aria-expanded={isFabOpen}
+        aria-controls="fab-menu"
+      >
+         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+      </button>
 
       <Modal isOpen={isProviderModalOpen} onClose={() => setIsProviderModalOpen(false)} title="تصفية العرض">
         <div className='flex flex-col items-start gap-2 mb-3'>
