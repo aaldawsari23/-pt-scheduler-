@@ -19,8 +19,8 @@ export const INITIAL_SETTINGS: Settings = {
   semiUrgentDaysAhead: 3,
   normalDaysAhead: 30,
   chronicWeeksAhead: 8,
-  blockWeekends: true,
-  blockFridays: true,
+  blockWeekends: true, // For Saturday
+  blockFridays: true,  // For Friday
   morningStartHour: 8,
   morningEndHour: 12,
   afternoonStartHour: 12,

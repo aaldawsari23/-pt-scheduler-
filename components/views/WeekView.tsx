@@ -180,8 +180,7 @@ const ProviderColumn: React.FC<{
     const dayOfWeek = selectedDate.getDay();
 
     const providerVacation = vacations.find(v => (v.providerId === provider.id || !v.providerId) && dayISO >= v.startDate && dayISO <= v.endDate);
-    const isClinicDay = provider.days.includes(dayOfWeek);
-
+    
      const handleQuickBook = (fileNo: string) => {
         const nextSlot = findNextAvailableSlot(provider.id, selectedDate, appointments);
         if (nextSlot) {
@@ -212,20 +211,6 @@ const ProviderColumn: React.FC<{
                 </div>
                 <div className="flex-1 bg-slate-100 flex items-center justify-center text-sm text-slate-500 p-4 font-semibold">
                     {providerVacation.description}
-                </div>
-            </div>
-        );
-    }
-    
-    if (!isClinicDay) {
-        return (
-            <div className="flex flex-col border-l border-slate-200 min-w-[160px]">
-                <div className="text-center p-3 border-b border-slate-200 h-[88px] flex flex-col justify-center">
-                    <h4 className="font-bold text-slate-800">{provider.name}</h4>
-                    <span className="text-xs text-slate-500">{provider.specialty}</span>
-                </div>
-                <div className="flex-1 bg-slate-100 flex items-center justify-center text-sm text-slate-500 p-4">
-                    لا توجد عيادة
                 </div>
             </div>
         );
@@ -358,6 +343,8 @@ const WeekView: React.FC<WeekViewProps> = (props) => {
       );
   }
 
+  // Smart filter for desktop view: only show providers who are working on the selected day.
+  const providersForSelectedDay = filteredProviders.filter(p => p.days.includes(selectedDay.getDay()));
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -392,9 +379,9 @@ const WeekView: React.FC<WeekViewProps> = (props) => {
       
       <div className="flex-grow overflow-auto">
         {/* DESKTOP VIEW */}
-        <div className="hidden md:grid h-full" style={{ gridTemplateColumns: `repeat(${Math.max(1, filteredProviders.length)}, minmax(160px, 1fr))` }}>
-            {filteredProviders.length > 0 ? (
-                filteredProviders.map(provider => (
+        <div className="hidden md:grid h-full" style={{ gridTemplateColumns: `repeat(${Math.max(1, providersForSelectedDay.length)}, minmax(160px, 1fr))` }}>
+            {providersForSelectedDay.length > 0 ? (
+                providersForSelectedDay.map(provider => (
                     <ProviderColumn
                         key={provider.id}
                         provider={provider}
@@ -403,7 +390,7 @@ const WeekView: React.FC<WeekViewProps> = (props) => {
                 ))
             ) : (
                 <div className="flex items-center justify-center h-full text-slate-500 p-4 col-span-full">
-                    لا يوجد معالجون يطابقون الفلتر المحدد.
+                    لا يوجد معالجون مطابقون للفلتر في هذا اليوم.
                 </div>
             )}
         </div>

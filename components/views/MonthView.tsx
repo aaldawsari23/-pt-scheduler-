@@ -1,15 +1,17 @@
 import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { addDays, getISODateString } from '../../utils/dateUtils';
-import type { ViewType } from '../../types';
+import { Specialty, type ViewType } from '../../types';
 
 interface MonthViewProps {
   currentDate: Date;
   setCurrentDate: (date: Date) => void;
   setView: (view: ViewType) => void;
+  selectedSpecialty: Specialty;
+  selectedProviderId: string | null;
 }
 
-const MonthView: React.FC<MonthViewProps> = ({ currentDate, setCurrentDate, setView }) => {
+const MonthView: React.FC<MonthViewProps> = ({ currentDate, setCurrentDate, setView, selectedSpecialty, selectedProviderId }) => {
   const { appointments, providers, extraCapacities, vacations } = useAppContext();
 
   const year = currentDate.getFullYear();
@@ -40,16 +42,30 @@ const MonthView: React.FC<MonthViewProps> = ({ currentDate, setCurrentDate, setV
           const isCurrentMonth = day.getMonth() === month;
           const isToday = new Date().toDateString() === day.toDateString();
           const dayISO = getISODateString(day);
-
           const dayOfWeek = day.getDay();
-          const activeProviders = providers.filter(p => p.days.includes(dayOfWeek));
+
+          let activeProviders = providers.filter(p => p.days.includes(dayOfWeek));
+
+          if (selectedProviderId) {
+            activeProviders = activeProviders.filter(p => p.id === selectedProviderId);
+          } else if (selectedSpecialty !== Specialty.All) {
+            activeProviders = activeProviders.filter(p => p.specialty === selectedSpecialty);
+          }
+          
           const totalCapacity = activeProviders.reduce((acc, p) => {
             const extra = extraCapacities.find(e => e.providerId === p.id && e.date === dayISO)?.slots || 0;
             const isOnVacation = vacations.some(v => (v.providerId === p.id || !v.providerId) && dayISO >= v.startDate && dayISO <= v.endDate);
             return isOnVacation ? acc : acc + p.dailyCapacity + extra;
           }, 0);
+          
+          let appointmentsOnDay = appointments.filter(a => getISODateString(new Date(a.start)) === dayISO);
+          if (selectedProviderId) {
+              appointmentsOnDay = appointmentsOnDay.filter(a => a.providerId === selectedProviderId);
+          } else if (selectedSpecialty !== Specialty.All) {
+              const providerIdsInSpecialty = providers.filter(p => p.specialty === selectedSpecialty).map(p => p.id);
+              appointmentsOnDay = appointmentsOnDay.filter(a => providerIdsInSpecialty.includes(a.providerId));
+          }
 
-          const appointmentsOnDay = appointments.filter(a => getISODateString(new Date(a.start)) === dayISO);
           const appCount = appointmentsOnDay.length;
           const availableSlots = Math.max(0, totalCapacity - appCount);
 

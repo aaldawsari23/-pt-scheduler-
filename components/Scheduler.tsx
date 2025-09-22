@@ -4,16 +4,31 @@ import DayView from './views/DayView';
 import WeekView from './views/WeekView';
 import MonthView from './views/MonthView';
 import { useAppContext } from '../context/AppContext';
-import { addDays, addWeeks, addMonths, getISODateString, toGregorianDateString, getStartOfWeek, toHijriDateString } from '../utils/dateUtils';
+import { addDays, addWeeks, addMonths, getISODateString, toGregorianDateString, getStartOfWeek, toHijriDateString, toGregorianTimeString } from '../utils/dateUtils';
 import SettingsModal from './modals/SettingsModal';
-import { ASEER_LOGO_URL } from '../constants';
+import { ASEER_LOGO_URL, SLOT_DURATION_MINUTES } from '../constants';
 import Modal from './common/Modal';
 import { generateUniqueId } from '../utils/helpers';
 import { findNextAvailableSlot } from './views/ProviderView';
 
+// Helper function to get the initial date, avoiding weekends based on standard Friday/Saturday.
+// This runs before component instantiation, so it cannot access context/settings.
+const getInitialDate = (): Date => {
+  let date = new Date();
+  // If it's Friday (5), move to next Sunday (+2 days)
+  if (date.getDay() === 5) {
+    date = addDays(date, 2);
+  } 
+  // If it's Saturday (6), move to next Sunday (+1 day)
+  else if (date.getDay() === 6) {
+    date = addDays(date, 1);
+  }
+  return date;
+};
+
 const Scheduler: React.FC = () => {
-  const { providers, settings, appointments, setAppointments, vacations, extraCapacities, showToast, logAudit } = useAppContext();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const { providers, settings, appointments, setAppointments, vacations, extraCapacities, showToast, logAudit, logEmergency } = useAppContext();
+  const [currentDate, setCurrentDate] = useState(getInitialDate());
   const [view, setView] = useState<ViewType>(ViewType.Week);
   const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty>(Specialty.All);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
@@ -98,12 +113,88 @@ const Scheduler: React.FC = () => {
       return;
     }
 
+    // Urgent bookings have special over-capacity logic
+    if (type === AppointmentType.Urgent) {
+      if(fabSpecialty === Specialty.All) {
+        showToast('يرجى اختيار تخصص للحالة العاجلة', 'error');
+        return;
+      }
+
+      let foundSlot = false;
+      // Search next 3 days
+      for (let i = 0; i < 3; i++) {
+          const date = addDays(new Date(), i);
+          const dateISO = getISODateString(date);
+          const dayOfWeek = date.getDay();
+
+          if ((settings.blockFridays && dayOfWeek === 5) || (settings.blockWeekends && dayOfWeek === 6)) continue;
+
+          const isGlobalVacation = vacations.some(v => !v.providerId && dateISO >= v.startDate && dateISO <= v.endDate);
+          if (isGlobalVacation) continue;
+
+          const specialtyProviders = providers.filter(p => 
+              p.specialty === fabSpecialty &&
+              p.days.includes(dayOfWeek) &&
+              !vacations.some(v => v.providerId === p.id && dateISO >= v.startDate && dateISO <= v.endDate)
+          );
+
+          if (specialtyProviders.length > 0) {
+              const provider = specialtyProviders[0]; // Take the first available provider
+              const providerAppointments = appointments
+                  .filter(a => a.providerId === provider.id && getISODateString(new Date(a.start)) === dateISO)
+                  .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+              let nextStartTime: Date;
+              if (providerAppointments.length > 0) {
+                  const lastAppointment = providerAppointments[providerAppointments.length - 1];
+                  nextStartTime = new Date(new Date(lastAppointment.end).getTime()); // Start right after the last one ends
+              } else {
+                  // Book at the end of the afternoon shift if the clinic is empty
+                  const endHour = Math.floor(settings.afternoonEndHour);
+                  const endMinutes = (settings.afternoonEndHour % 1) * 60;
+                  nextStartTime = new Date(date.setHours(endHour, endMinutes, 0, 0));
+              }
+              
+              const newAppointment = {
+                  id: generateUniqueId(),
+                  fileNo: fabFileNo,
+                  providerId: provider.id,
+                  start: nextStartTime.toISOString(),
+                  end: new Date(nextStartTime.getTime() + SLOT_DURATION_MINUTES * 60000).toISOString(),
+                  type: AppointmentType.Urgent,
+                  createdAt: new Date().toISOString(),
+              };
+
+              setAppointments(prev => [...prev, newAppointment]);
+              logEmergency({
+                fileNo: fabFileNo,
+                providerId: provider.id,
+                providerName: provider.name,
+                appointmentStart: newAppointment.start,
+              });
+              showToast(`تم حجز موعد عاجل (فوق السعة) للملف ${fabFileNo} مع ${provider.name}`, 'success');
+
+              setFabFileNo('');
+              setFabSpecialty(Specialty.All);
+              setIsFabOpen(false);
+              foundSlot = true;
+              break; // Exit loop
+          }
+      }
+
+      if (!foundSlot) {
+          showToast(`لم يتم العثور على عيادة متاحة لحجز الموعد العاجل خلال 3 أيام`, 'error');
+      }
+      return; // End execution for urgent type
+    }
+
+    // Standard booking for other types
     const result = findNearestAppointment(type, fabSpecialty);
 
     if (result) {
       const { provider, date, time } = result;
       const start = new Date(`${getISODateString(date)}T${time}:00`);
-      const end = new Date(start.getTime() + 15 * 60000);
+      const end = new Date(start.getTime() + SLOT_DURATION_MINUTES * 60000);
       
       const newAppointment = {
         id: generateUniqueId(),
@@ -116,7 +207,7 @@ const Scheduler: React.FC = () => {
       };
       
       setAppointments(prev => [...prev, newAppointment]);
-      showToast(`تم حجز موعد للملف ${fabFileNo} مع ${provider.name} يوم ${toGregorianDateString(start)} (${toHijriDateString(start)})`, 'success');
+      showToast(`تم حجز موعد للملف ${fabFileNo} مع ${provider.name} يوم ${toGregorianDateString(start)}`, 'success');
       
       logAudit({
         action: AuditAction.Create,
@@ -136,7 +227,7 @@ const Scheduler: React.FC = () => {
       showToast(`لم يتم العثور على موعد متاح للتخصص المطلوب (${type})`, 'error');
     }
   };
-
+  
   const filteredProviders = useMemo(() => {
     return providers.filter(p => {
       const specialtyMatch = selectedSpecialty === Specialty.All || p.specialty === selectedSpecialty;
@@ -145,11 +236,44 @@ const Scheduler: React.FC = () => {
   }, [providers, selectedSpecialty]);
   
   const navigateDate = (direction: number) => {
-    const newDate = view === ViewType.Day ? addDays(currentDate, direction) :
-                   view === ViewType.Week ? addWeeks(currentDate, direction) :
-                   addMonths(currentDate, direction);
+    let newDate;
+    if (view === ViewType.Day) {
+      newDate = new Date(currentDate);
+      let safetyCounter = 0; // To prevent infinite loops if all days are blocked
+      do {
+        newDate = addDays(newDate, direction);
+        safetyCounter++;
+        if (safetyCounter > 7) {
+          console.error("All days of the week seem to be blocked by settings.");
+          // Fallback to simple date change to avoid browser freezing
+          newDate = addDays(new Date(currentDate), direction);
+          break;
+        }
+      } while ((settings.blockFridays && newDate.getDay() === 5) || (settings.blockWeekends && newDate.getDay() === 6));
+    } else {
+      newDate = view === ViewType.Week ? addWeeks(currentDate, direction) : addMonths(currentDate, direction);
+    }
     setCurrentDate(newDate);
-  }
+  };
+
+  const handleGoToToday = () => {
+    let today = new Date();
+    if (view === ViewType.Day) {
+      // If today is a blocked day, advance to the next available working day
+      if ((settings.blockFridays && today.getDay() === 5) || (settings.blockWeekends && today.getDay() === 6)) {
+        let nextDay = new Date(today);
+        let safetyCounter = 0;
+        do {
+          nextDay = addDays(nextDay, 1);
+          safetyCounter++;
+          if (safetyCounter > 7) break; // Safety break
+        } while ((settings.blockFridays && nextDay.getDay() === 5) || (settings.blockWeekends && nextDay.getDay() === 6));
+        setCurrentDate(nextDay);
+        return;
+      }
+    }
+    setCurrentDate(today);
+  };
 
   const dateRangeString = useMemo(() => {
     if (view === ViewType.Month) {
@@ -165,9 +289,9 @@ const Scheduler: React.FC = () => {
   }, [currentDate, view]);
 
   const fabActions = [
-    { label: 'عاجل', type: AppointmentType.Urgent, icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>, style: 'bg-red-500 hover:bg-red-600' },
-    { label: 'شبه عاجل', type: AppointmentType.SemiUrgent, icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5.25 3A2.25 2.25 0 003 5.25v9.5A2.25 2.25 0 005.25 17h9.5A2.25 2.25 0 0017 14.75v-9.5A2.25 2.25 0 0014.75 3h-9.5zM10 10a.75.75 0 00-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 00.75-.75V10.75a.75.75 0 00-.75-.75h-.01zM9.25 6a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5z" /></svg>, style: 'bg-amber-500 hover:bg-amber-600' },
-    { label: 'اعتيادي', type: AppointmentType.Normal, icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>, style: 'bg-green-500 hover:bg-green-600' },
+    { label: 'عاجل', type: AppointmentType.Urgent, handler: handleFabBook, icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>, style: 'bg-red-500 hover:bg-red-600' },
+    { label: 'شبه عاجل', type: AppointmentType.SemiUrgent, handler: handleFabBook, icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5.25 3A2.25 2.25 0 003 5.25v9.5A2.25 2.25 0 005.25 17h9.5A2.25 2.25 0 0017 14.75v-9.5A2.25 2.25 0 0014.75 3h-9.5zM10 10a.75.75 0 00-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 00.75-.75V10.75a.75.75 0 00-.75-.75h-.01zM9.25 6a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5z" /></svg>, style: 'bg-amber-500 hover:bg-amber-600' },
+    { label: 'اعتيادي', type: AppointmentType.Normal, handler: handleFabBook, icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>, style: 'bg-green-500 hover:bg-green-600' },
   ];
 
   return (
@@ -234,7 +358,7 @@ const Scheduler: React.FC = () => {
                             <button onClick={() => navigateDate(1)} className="p-1 sm:p-2 rounded-md hover:bg-slate-200 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg></button>
                             <button onClick={() => navigateDate(-1)} className="p-1 sm:p-2 rounded-md hover:bg-slate-200 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg></button>
                         </div>
-                        <button onClick={() => setCurrentDate(new Date())} className="px-3 sm:px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-100 font-semibold transition-all">اليوم</button>
+                        <button onClick={handleGoToToday} className="px-3 sm:px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-100 font-semibold transition-all">اليوم</button>
                          <span className="font-bold text-slate-700 text-sm sm:text-base">{dateRangeString}</span>
                     </div>
 
@@ -249,7 +373,7 @@ const Scheduler: React.FC = () => {
                  <div className="flex-grow overflow-auto">
                     {view === ViewType.Day && <DayView currentDate={currentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
                     {view === ViewType.Week && <WeekView currentDate={currentDate} setCurrentDate={setCurrentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
-                    {view === ViewType.Month && <MonthView currentDate={currentDate} setCurrentDate={setCurrentDate} setView={setView} />}
+                    {view === ViewType.Month && <MonthView currentDate={currentDate} setCurrentDate={setCurrentDate} setView={setView} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
                 </div>
             </div>
         </main>
@@ -275,7 +399,7 @@ const Scheduler: React.FC = () => {
           </div>
           <div className="grid grid-cols-3 gap-2">
             {fabActions.map(action => (
-              <button key={action.label} onClick={() => handleFabBook(action.type)} className={`flex flex-col items-center justify-center gap-1 text-white p-2 rounded-lg shadow-md text-xs font-semibold transition-transform transform hover:scale-105 ${action.style}`}>
+              <button key={action.label} onClick={() => action.handler(action.type)} className={`flex flex-col items-center justify-center gap-1 text-white p-2 rounded-lg shadow-md text-[10px] font-semibold transition-transform transform hover:scale-105 ${action.style}`}>
                  {action.icon}
                  <span>{action.label}</span>
               </button>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { AuditAction, type Provider, type Appointment, type Vacation, type Settings, type SlotLock, type Toast, type ConfirmationState, type TimeOff, type ExtraCapacity, type AuditEntry } from '../types';
+import { AuditAction, type Provider, type Appointment, type Vacation, type Settings, type SlotLock, type Toast, type ConfirmationState, type TimeOff, type ExtraCapacity, type AuditEntry, type EmergencyLogEntry } from '../types';
 import { INITIAL_PROVIDERS, INITIAL_SETTINGS } from '../constants';
 import { generateUniqueId } from '../utils/helpers';
 
@@ -27,6 +27,8 @@ interface AppContextType {
   closeConfirmation: () => void;
   auditLog: AuditEntry[];
   logAudit: (entry: Omit<AuditEntry, 'id'|'timestamp'> & { timestamp?: string }) => void;
+  emergencyLog: EmergencyLogEntry[];
+  logEmergency: (entry: Omit<EmergencyLogEntry, 'id'|'timestamp'>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -42,6 +44,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [confirmation, setConfirmation] = useState<ConfirmationState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [auditLog, setAuditLog] = useLocalStorage<AuditEntry[]>('auditLog', []);
+  const [emergencyLog, setEmergencyLog] = useLocalStorage<EmergencyLogEntry[]>('emergencyLog', []);
 
   // Effect to merge stored settings with defaults on initial load.
   // This acts as a simple data migration to prevent issues with outdated settings.
@@ -76,6 +79,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
       setAuditLog(prev => [newEntry, ...prev].slice(0, 1000)); // Keep last 1000 entries
     };
+    
+  const logEmergency = (entry: Omit<EmergencyLogEntry, 'id'|'timestamp'>) => {
+      const newEntry: EmergencyLogEntry = {
+          id: generateUniqueId(),
+          timestamp: new Date().toISOString(),
+          ...entry,
+      };
+      setEmergencyLog(prev => [newEntry, ...prev].slice(0, 500)); // Keep last 500 entries
+  };
 
 
   const value = {
@@ -100,6 +112,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     closeConfirmation,
     auditLog,
     logAudit,
+    emergencyLog,
+    logEmergency,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

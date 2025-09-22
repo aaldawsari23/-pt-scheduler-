@@ -88,8 +88,8 @@ export interface Settings {
   semiUrgentDaysAhead: number;
   normalDaysAhead: number;
   chronicWeeksAhead: number;
-  blockWeekends: boolean;
-  blockFridays: boolean;
+  blockWeekends: boolean; // For Saturday (day 6)
+  blockFridays: boolean;  // For Friday (day 5)
   morningStartHour: number;
   morningEndHour: number;
   afternoonStartHour: number;
@@ -117,4 +117,14 @@ export interface AuditEntry {
   start?: string;            // ISO
   end?: string;              // ISO
   details?: string;          // نص إضافي (نوع الموعد مثلاً)
+}
+
+// === Emergency Log (سجل الطوارئ) ===
+export interface EmergencyLogEntry {
+  id: string;
+  timestamp: string;      // ISO
+  fileNo: string;
+  providerId: string;
+  providerName: string;
+  appointmentStart: string; // ISO
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import Modal from '../common/Modal';
-import { Specialty, type Provider, type Vacation, type TimeOff, type ExtraCapacity, type AuditEntry } from '../../types';
+import { Specialty, type Provider, type Vacation, type TimeOff, type ExtraCapacity, type AuditEntry, type EmergencyLogEntry } from '../../types';
 import { generateUniqueId, exportToJson, exportToCsv, transliterate } from '../../utils/helpers';
 import { getISODateString, toGregorianDateTimeString, toGregorianTimeString } from '../../utils/dateUtils';
 import { ASEER_LOGO_URL } from '../../constants';
@@ -22,6 +22,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     showToast,
     askConfirmation,
     auditLog,
+    emergencyLog,
   } = useAppContext();
 
   const [pin, setPin] = useState('');
@@ -206,17 +207,27 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between mt-3">
-                  <span className="text-sm text-slate-600">حجب أيام الجمعة</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={settings.blockFridays} 
-                           onChange={(e) => setSettings({...settings, blockFridays: e.target.checked})} 
-                           className="sr-only peer" />
-                    <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-                  </label>
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">حجب أيام الجمعة</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={settings.blockFridays} 
+                            onChange={(e) => setSettings({...settings, blockFridays: e.target.checked})} 
+                            className="sr-only peer" />
+                      <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    </label>
+                  </div>
+                   <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">حجب أيام السبت</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={settings.blockWeekends} 
+                            onChange={(e) => setSettings({...settings, blockWeekends: e.target.checked})} 
+                            className="sr-only peer" />
+                      <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    </label>
+                  </div>
                 </div>
               </div>
-{/* FIX: Added missing closing divs for the "General Settings" card to correct the JSX structure. */}
             </div>
         </div>
               
@@ -253,10 +264,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
       {/* --- Scheduling Control Card --- */}
       <div className="p-5 bg-slate-50 rounded-lg border border-slate-200 space-y-6">
-        <h4 className="text-lg font-semibold text-slate-700">إدارة الجداول والقدرة الاستيعابية</h4>
+        <h4 className="text-lg font-semibold text-slate-700">إدارة الجداول والإغلاقات</h4>
         {/* Add Vacation */}
         <div>
-          <h5 className="font-semibold text-slate-600 mb-2">إضافة إجازة (يوم كامل)</h5>
+          <h5 className="font-semibold text-slate-600 mb-2">إغلاق يوم كامل (إجازة)</h5>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 p-3 bg-white border rounded-lg">
               <select value={newVacation.providerId} onChange={e => setNewVacation(v => ({...v, providerId: e.target.value}))} className="p-2 border rounded-md sm:col-span-1"><option value="">الكل</option>{localProviders.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
               <input type="text" placeholder="الوصف (مثال: عيد الفطر)" value={newVacation.description} onChange={e => setNewVacation(v => ({...v, description: e.target.value}))} className="p-2 border rounded-md sm:col-span-1"/>
@@ -267,7 +278,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         </div>
         {/* Add Time Off */}
          <div>
-          <h5 className="font-semibold text-slate-600 mb-2">إضافة استئذان (ساعات محددة)</h5>
+          <h5 className="font-semibold text-slate-600 mb-2">إغلاق جزئي (استئذان)</h5>
           <div className="grid grid-cols-1 sm:grid-cols-6 gap-2 p-3 bg-white border rounded-lg">
               <select value={newTimeOff.providerId} onChange={e => setNewTimeOff(v => ({...v, providerId: e.target.value}))} className="p-2 border rounded-md sm:col-span-1"><option value="">اختر معالج</option>{localProviders.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
               <input type="text" placeholder="الوصف (مثال: اجتماع)" value={newTimeOff.description} onChange={e => setNewTimeOff(v => ({...v, description: e.target.value}))} className="p-2 border rounded-md sm:col-span-2"/>
@@ -289,6 +300,35 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-h-48 overflow-y-auto">
           {/* List views can be added here for vacations, timeoffs, extracapacity if needed */}
+        </div>
+      </div>
+
+      {/* --- Emergency Log --- */}
+      <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
+        <h4 className="text-lg font-semibold text-slate-700 mb-3">سجلّ حالات الطوارئ</h4>
+        <div className="max-h-64 overflow-auto border border-slate-200 rounded-md bg-white">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-100 sticky top-0">
+              <tr>
+                <th className="px-3 py-2 text-start font-semibold text-slate-600">وقت الإضافة</th>
+                <th className="px-3 py-2 text-start font-semibold text-slate-600">رقم الملف</th>
+                <th className="px-3 py-2 text-start font-semibold text-slate-600">المعالج</th>
+                <th className="px-3 py-2 text-start font-semibold text-slate-600">تاريخ الموعد</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {emergencyLog.length === 0 ? (
+                <tr><td className="px-3 py-4 text-center text-slate-500" colSpan={4}>لا يوجد سجلات بعد.</td></tr>
+              ) : emergencyLog.map((entry) => (
+                <tr key={entry.id} className="hover:bg-slate-50">
+                  <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{toGregorianDateTimeString(new Date(entry.timestamp), { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</td>
+                  <td className="px-3 py-2 text-slate-800 font-bold">{entry.fileNo}</td>
+                  <td className="px-3 py-2 text-slate-600">{entry.providerName}</td>
+                  <td className="px-3 py-2 text-slate-500">{toGregorianDateTimeString(new Date(entry.appointmentStart))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
