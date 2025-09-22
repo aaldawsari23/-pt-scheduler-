@@ -354,10 +354,12 @@ const Scheduler: React.FC = () => {
              <div className="flex-grow flex flex-col bg-white rounded-xl shadow-inner border border-slate-200 overflow-hidden">
                 <div className="flex-shrink-0 border-b border-slate-200 p-3 flex flex-wrap justify-between items-center gap-4">
                     <div className="flex items-center gap-1 sm:gap-2">
-                        <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                            <button onClick={() => navigateDate(1)} className="p-1 sm:p-2 rounded-md hover:bg-slate-200 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg></button>
-                            <button onClick={() => navigateDate(-1)} className="p-1 sm:p-2 rounded-md hover:bg-slate-200 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg></button>
-                        </div>
+                        {view !== ViewType.Week && (
+                          <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                              <button onClick={() => navigateDate(1)} className="p-1 sm:p-2 rounded-md hover:bg-slate-200 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg></button>
+                              <button onClick={() => navigateDate(-1)} className="p-1 sm:p-2 rounded-md hover:bg-slate-200 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg></button>
+                          </div>
+                        )}
                         <button onClick={handleGoToToday} className="px-3 sm:px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-100 font-semibold transition-all">اليوم</button>
                          <span className="font-bold text-slate-700 text-sm sm:text-base">{dateRangeString}</span>
                     </div>
@@ -372,7 +374,7 @@ const Scheduler: React.FC = () => {
                 </div>
                  <div className="flex-grow overflow-auto">
                     {view === ViewType.Day && <DayView currentDate={currentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
-                    {view === ViewType.Week && <WeekView currentDate={currentDate} setCurrentDate={setCurrentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
+                    {view === ViewType.Week && <WeekView currentDate={currentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
                     {view === ViewType.Month && <MonthView currentDate={currentDate} setCurrentDate={setCurrentDate} setView={setView} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
                 </div>
             </div>
