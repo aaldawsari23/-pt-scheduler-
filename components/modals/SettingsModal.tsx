@@ -22,7 +22,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     showToast,
     askConfirmation,
     auditLog,
-    clearAudit
   } = useAppContext();
 
   const [pin, setPin] = useState('');
@@ -110,7 +109,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     setLocalExtraCapacities(prev => [...prev, { ...newExtraCapacity, id: generateUniqueId() }]);
   };
 
-  const handleExport = (format: 'json' | 'csv') => {
+  const handleExport = (format: 'csv') => {
       const dataToExport = appointments.map(app => {
           const provider = providers.find(p => p.id === app.providerId);
           const startDate = new Date(app.start);
@@ -127,37 +126,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               createdAt: toGregorianDateTimeString(createdAtDate) 
           };
       });
-      if (format === 'json') exportToJson(dataToExport, 'appointments'); else exportToCsv(dataToExport, 'appointments');
+      exportToCsv(dataToExport, 'appointments');
       showToast(`تم بدء تصدير الملف ${format.toUpperCase()}`, 'success');
   };
-
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        showToast('حجم الملف كبير جدًا. الرجاء اختيار ملف أصغر من 2 ميجابايت.', 'error');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-        setSettings({ ...settings, customLogoB64: reader.result as string });
-        showToast('تم تحديث الشعار بنجاح', 'success');
-    };
-    reader.onerror = () => {
-        showToast('حدث خطأ أثناء قراءة الملف.', 'error');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveLogo = () => {
-    askConfirmation('إزالة الشعار', 'هل أنت متأكد من إزالة الشعار المخصص؟ سيعود الشعار الافتراضي.', () => {
-      setSettings({ ...settings, customLogoB64: null });
-      showToast('تمت إزالة الشعار المخصص.', 'info');
-    });
-  };
-
 
   const renderAuth = () => (
     <div className="flex flex-col items-center gap-4 p-8">
@@ -176,8 +147,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
             <h4 className="text-lg font-semibold mb-4 text-slate-700">الإعدادات العامة</h4>
             <div className="space-y-4">
-              <div className="flex items-center justify-between"><span className="text-slate-600">إيقاف الحجز بشكل كامل</span><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked={settings.bookingLocked} onChange={(e) => setSettings({...settings, bookingLocked: e.target.checked})} className="sr-only peer" /><div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div></label></div>
-              <div className="flex items-center justify-between"><span className="text-slate-600">منع الحجز قبل تاريخ:</span><input type="date" value={settings.bookingLockDate || ''} onChange={(e) => setSettings({...settings, bookingLockDate: e.target.value || null})} className="p-2 border rounded-md" disabled={settings.bookingLocked} /></div>
               <div className="flex items-center justify-between"><span className="text-slate-600">تفعيل خانة احتياطية للحالات الطارئة</span><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" checked={settings.urgentReserve} onChange={(e) => setSettings({...settings, urgentReserve: e.target.checked})} className="sr-only peer" /><div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></div>
                
               {/* Advanced Booking Rules */}
@@ -238,15 +207,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 </div>
                 
                 <div className="flex items-center justify-between mt-3">
-                  <span className="text-sm text-slate-600">توزيع تلقائي للحجوزات</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={settings.autoDistributeBookings} 
-                           onChange={(e) => setSettings({...settings, autoDistributeBookings: e.target.checked})} 
-                           className="sr-only peer" />
-                    <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                  </label>
-                </div>
-                <div className="flex items-center justify-between mt-3">
                   <span className="text-sm text-slate-600">حجب أيام الجمعة</span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" checked={settings.blockFridays} 
@@ -256,23 +216,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   </label>
                 </div>
               </div>
-              
-              {/* --- Logo Upload --- */}
-              <div className="pt-4 border-t border-slate-200">
-                <span className="text-slate-600 font-medium">شعار التطبيق</span>
-                <div className="flex items-center gap-4 mt-2">
-                    <img src={settings.customLogoB64 || ASEER_LOGO_URL} alt="Current Logo" className="h-16 w-16 rounded-md object-contain bg-white border border-slate-200 p-1" />
-                    <div className="flex items-center gap-2">
-                        <input type="file" id="logoUpload" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} className="hidden" />
-                        <label htmlFor="logoUpload" className="cursor-pointer bg-white text-slate-700 px-3 py-2 text-sm rounded-md border border-slate-300 hover:bg-slate-50">تغيير الشعار</label>
-                        {settings.customLogoB64 && (
-                            <button onClick={handleRemoveLogo} className="bg-red-50 text-red-700 px-3 py-2 text-sm rounded-md hover:bg-red-100">إزالة</button>
-                        )}
-                    </div>
-                </div>
-              </div>
+{/* FIX: Added missing closing divs for the "General Settings" card to correct the JSX structure. */}
             </div>
         </div>
+              
 
       {/* --- Providers Card --- */}
       <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
@@ -352,10 +299,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           <div className="flex gap-2">
             <button
               className="px-3 py-1.5 rounded-lg border text-sm text-slate-700 hover:bg-slate-50"
-              onClick={() => exportToJson(auditLog, `audit-log-${new Date().toISOString().split('T')[0]}.json`)}
-            >تصدير JSON</button>
-            <button
-              className="px-3 py-1.5 rounded-lg border text-sm text-slate-700 hover:bg-slate-50"
               onClick={() => exportToCsv(
                 auditLog.map((a: AuditEntry) => ({
                   id: a.id, action: a.action, timestamp: a.timestamp, fileNo: a.fileNo,
@@ -364,10 +307,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 })), `audit-log-${new Date().toISOString().split('T')[0]}.csv`
               )}
             >تصدير CSV</button>
-            <button
-              className="px-3 py-1.5 rounded-lg border border-red-300 text-red-700 hover:bg-red-50 text-sm"
-              onClick={clearAudit}
-            >مسح السجل</button>
           </div>
         </div>
         <div className="max-h-64 overflow-auto border border-slate-200 rounded-md bg-white">
@@ -403,7 +342,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       {/* --- Data & Sync Card --- */}
        <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
             <h4 className="text-lg font-semibold mb-4 text-slate-700">البيانات والمزامنة</h4>
-            <div className="flex flex-wrap gap-4"><button onClick={() => handleExport('json')} className="bg-slate-700 text-white px-4 py-2 rounded-md hover:bg-slate-800">تصدير JSON</button><button onClick={() => handleExport('csv')} className="bg-slate-700 text-white px-4 py-2 rounded-md hover:bg-slate-800">تصدير CSV</button><button className="bg-slate-400 text-white px-4 py-2 rounded-md cursor-not-allowed" disabled>مزامنة (SYNC)</button></div>
+            <div className="flex flex-wrap gap-4"><button onClick={() => handleExport('csv')} className="bg-slate-700 text-white px-4 py-2 rounded-md hover:bg-slate-800">تصدير CSV</button></div>
         </div>
 
       <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-slate-200"><button onClick={onClose} className="bg-slate-200 text-slate-800 px-6 py-2 rounded-md hover:bg-slate-300">إلغاء</button><button onClick={handleSaveChanges} className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">حفظ التغييرات</button></div>

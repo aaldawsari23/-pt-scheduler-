@@ -77,17 +77,12 @@ export interface ExtraCapacity {
     slots: number;
 }
 
-
 export interface Settings {
   pin: string | null; // A simple hash
-  bookingLocked: boolean;
-  bookingLockDate: string | null; // YYYY-MM-DD
   urgentReserve: boolean; // Toggle for 1 urgent slot per provider
   emergencySlotCode: string | null;
   followUp3wWeeks: number;
   followUp1mMonths: number;
-  customLogoB64: string | null; // To store user-uploaded logo
-  language: 'ar' | 'en';
   // Advanced booking rules
   urgentDaysAhead: number;
   semiUrgentDaysAhead: number;
@@ -99,27 +94,10 @@ export interface Settings {
   morningEndHour: number;
   afternoonStartHour: number;
   afternoonEndHour: number;
-  autoDistributeBookings: boolean;
-  hideOutsideMonthDays: boolean;
 }
 
 export interface SlotLock {
   [slotId: string]: string; // key: `${providerId}_${isoDateString}`, value: code
-}
-
-export interface HepExercise {
-  name: string;
-  description: string[];
-  image: string; // Base64 encoded SVG/PNG - stored in localStorage
-}
-
-export interface HepContent {
-  id: string;
-  navTitle: string;
-  title: string;
-  tipsTitle: string;
-  tips: string[];
-  exercises: HepExercise[];
 }
 
 // === Audit Log (سجل العمليات) ===
@@ -139,11 +117,4 @@ export interface AuditEntry {
   start?: string;            // ISO
   end?: string;              // ISO
   details?: string;          // نص إضافي (نوع الموعد مثلاً)
-}
-
-export interface ManualBookingDefaults {
-  providerId?: string;
-  date?: string; // YYYY-MM-DD
-  time?: string; // HH:mm
-  type?: AppointmentType;
 }

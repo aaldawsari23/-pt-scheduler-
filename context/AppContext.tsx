@@ -27,7 +27,6 @@ interface AppContextType {
   closeConfirmation: () => void;
   auditLog: AuditEntry[];
   logAudit: (entry: Omit<AuditEntry, 'id'|'timestamp'> & { timestamp?: string }) => void;
-  clearAudit: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -78,13 +77,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setAuditLog(prev => [newEntry, ...prev].slice(0, 1000)); // Keep last 1000 entries
     };
 
-  const clearAudit = () => {
-      askConfirmation('مسح السجل', 'هل أنت متأكد من مسح سجل العمليات بالكامل؟ لا يمكن التراجع عن هذا الإجراء.', () => {
-          setAuditLog([]);
-          showToast('تم مسح سجل العمليات.', 'info');
-      });
-  };
-
 
   const value = {
     providers,
@@ -108,7 +100,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     closeConfirmation,
     auditLog,
     logAudit,
-    clearAudit,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

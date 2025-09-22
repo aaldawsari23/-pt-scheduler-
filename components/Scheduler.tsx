@@ -1,15 +1,12 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { ViewType, Specialty, AppointmentType, AuditAction, type ManualBookingDefaults, type Provider } from '../types';
+import { ViewType, Specialty, AppointmentType, AuditAction, type Provider } from '../types';
 import DayView from './views/DayView';
 import WeekView from './views/WeekView';
 import MonthView from './views/MonthView';
 import { useAppContext } from '../context/AppContext';
 import { addDays, addWeeks, addMonths, getISODateString, toGregorianDateString, getStartOfWeek, toHijriDateString } from '../utils/dateUtils';
 import SettingsModal from './modals/SettingsModal';
-import HepModal from './modals/HepModal';
 import { ASEER_LOGO_URL } from '../constants';
-import ManualBookingModal from './modals/ManualBookingModal';
-import LanguageToggle from './common/LanguageToggle';
 import Modal from './common/Modal';
 import { generateUniqueId } from '../utils/helpers';
 import { findNextAvailableSlot } from './views/ProviderView';
@@ -22,9 +19,6 @@ const Scheduler: React.FC = () => {
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isHepModalOpen, setIsHepModalOpen] = useState(false);
-  const [isManualBookingModalOpen, setIsManualBookingModalOpen] = useState(false);
-  const [manualBookingDefaults, setManualBookingDefaults] = useState<ManualBookingDefaults | null>(null);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState(false);
   const [isFabOpen, setIsFabOpen] = useState(false);
   
@@ -32,7 +26,7 @@ const Scheduler: React.FC = () => {
   const [fabFileNo, setFabFileNo] = useState('');
   const [fabSpecialty, setFabSpecialty] = useState<Specialty>(Specialty.All);
   
-  const logo = settings.customLogoB64 || ASEER_LOGO_URL;
+  const logo = ASEER_LOGO_URL;
 
   useEffect(() => {
     document.documentElement.lang = 'ar';
@@ -49,17 +43,6 @@ const Scheduler: React.FC = () => {
     setSelectedProviderId(null);
     setIsProviderModalOpen(false); // Close modal on selection
   }
-
-  const openManualBooking = (providerId: string, date: Date, time?: string) => {
-    setManualBookingDefaults({ providerId, date: getISODateString(date), time });
-    setIsManualBookingModalOpen(true);
-  };
-  
-  const openFreeManualBooking = (defaults: ManualBookingDefaults | null) => {
-    setIsFabOpen(false);
-    setManualBookingDefaults(defaults);
-    setIsManualBookingModalOpen(true);
-  };
 
   const findNearestAppointment = useCallback((type: AppointmentType, specialty: Specialty) => {
     let searchDaysLimit = 30;
@@ -99,12 +82,7 @@ const Scheduler: React.FC = () => {
 
         if (providerAvailability.length === 0) continue;
 
-        let targetProvider: Provider;
-        if (settings.autoDistributeBookings) {
-            targetProvider = providerAvailability.sort((a, b) => b.availableSlotsCount - a.availableSlotsCount)[0].provider;
-        } else {
-            targetProvider = providerAvailability[0].provider;
-        }
+        const targetProvider = providerAvailability[0].provider;
 
         const nextSlotTime = findNextAvailableSlot(targetProvider.id, date, appointments);
         if (nextSlotTime) {
@@ -198,8 +176,8 @@ const Scheduler: React.FC = () => {
         <div className="flex items-center gap-2 sm:gap-4">
           <img src={logo} alt="شعار" className="h-10 w-10 sm:h-12 sm:w-12 object-contain bg-white/20 rounded-full p-1" />
           <div>
-            <h1 className="text-base sm:text-lg font-bold">مستشفى الملك عبدالله – بيشة</h1>
-            <h2 className="text-xs sm:text-sm opacity-80">نظام حجز مواعيد العيادات الخارجية</h2>
+            <h1 className="text-base sm:text-lg font-bold">مستشفى الملك عبدالله - بيشه</h1>
+            <h2 className="text-xs sm:text-sm opacity-80">مركز التأهيل الطبي - قسم العلاج الطبيعي</h2>
           </div>
         </div>
         
@@ -213,10 +191,6 @@ const Scheduler: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-1 sm:gap-3">
-            <div className="hidden sm:block"><LanguageToggle /></div>
-            <button onClick={() => setIsHepModalOpen(true)} className="p-2 rounded-full hover:bg-black/20 transition-all" title="مكتبة التمارين المنزلية">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3h3m-3 4h3m-3 4h3" /></svg>
-            </button>
             <button onClick={() => setIsSettingsModalOpen(true)} className="p-2 rounded-full hover:bg-black/20 transition-all" title="الإعدادات">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
@@ -281,7 +255,7 @@ const Scheduler: React.FC = () => {
         </main>
       </div>
 
-      <div className="fixed bottom-4 left-4 z-40 flex flex-col-reverse items-center gap-4">
+      <div className="fixed bottom-4 left-4 z-40 flex flex-col-reverse items-end gap-4">
         <div className={`transition-all duration-300 ease-in-out ${isFabOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
           <div className="bg-white/80 backdrop-blur-md p-4 rounded-xl shadow-2xl w-72 space-y-3 border border-slate-200">
             <h4 className="font-bold text-slate-800 text-center">حجز سريع</h4>
@@ -304,12 +278,6 @@ const Scheduler: React.FC = () => {
                    <span>{action.label}</span>
                 </button>
               ))}
-            </div>
-
-            <div className="border-t pt-3 mt-3">
-                <button onClick={() => openFreeManualBooking(null)} className="w-full text-center text-sm font-semibold text-blue-600 hover:text-blue-800 p-2 bg-blue-50 rounded-lg hover:bg-blue-100">
-                    حجز يدوي مفصّل...
-                </button>
             </div>
           </div>
         </div>
@@ -352,12 +320,6 @@ const Scheduler: React.FC = () => {
       </Modal>
 
       <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
-      <HepModal isOpen={isHepModalOpen} onClose={() => setIsHepModalOpen(false)} />
-      <ManualBookingModal 
-        isOpen={isManualBookingModalOpen} 
-        onClose={() => { setIsManualBookingModalOpen(false); setManualBookingDefaults(null); }} 
-        defaults={manualBookingDefaults}
-      />
     </div>
   );
 };

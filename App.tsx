@@ -3,7 +3,6 @@ import Scheduler from './components/Scheduler';
 import { AppProvider, useAppContext } from './context/AppContext';
 import Toast from './components/common/Toast';
 import ConfirmationModal from './components/common/ConfirmationModal';
-import PWAUpdateToast from './components/common/PWAUpdateToast';
 
 
 const AppContent: React.FC = () => {
@@ -40,9 +39,6 @@ const AppContent: React.FC = () => {
           onCancel={closeConfirmation}
         />
       )}
-
-      {/* PWA Update Toast */}
-      <PWAUpdateToast />
     </div>
   );
 };
