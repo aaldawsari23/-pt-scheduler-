@@ -54,7 +54,7 @@ export interface Appointment {
 }
 
 export interface Vacation {
-  id:string;
+  id: string;
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   providerId?: string | null; // null or undefined for global
@@ -62,19 +62,19 @@ export interface Vacation {
 }
 
 export interface TimeOff {
-    id: string;
-    providerId: string;
-    date: string; // YYYY-MM-DD
-    startTime: string; // HH:mm
-    endTime: string; // HH:mm
-    description: string;
+  id: string;
+  providerId: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  description: string;
 }
 
 export interface ExtraCapacity {
-    id: string;
-    providerId: string;
-    date: string; // YYYY-MM-DD
-    slots: number;
+  id: string;
+  providerId: string;
+  date: string; // YYYY-MM-DD
+  slots: number;
 }
 
 export interface Settings {
@@ -89,7 +89,7 @@ export interface Settings {
   normalDaysAhead: number;
   chronicWeeksAhead: number;
   blockWeekends: boolean; // For Saturday (day 6)
-  blockFridays: boolean;  // For Friday (day 5)
+  blockFridays: boolean; // For Friday (day 5)
   morningStartHour: number;
   morningEndHour: number;
   afternoonStartHour: number;
@@ -110,19 +110,19 @@ export enum AuditAction {
 export interface AuditEntry {
   id: string;
   action: AuditAction;
-  timestamp: string;         // ISO
+  timestamp: string; // ISO
   fileNo: string;
   providerId?: string;
   providerName?: string;
-  start?: string;            // ISO
-  end?: string;              // ISO
-  details?: string;          // نص إضافي (نوع الموعد مثلاً)
+  start?: string; // ISO
+  end?: string; // ISO
+  details?: string; // نص إضافي (نوع الموعد مثلاً)
 }
 
 // === Emergency Log (سجل الطوارئ) ===
 export interface EmergencyLogEntry {
   id: string;
-  timestamp: string;      // ISO
+  timestamp: string; // ISO
   fileNo: string;
   providerId: string;
   providerName: string;
