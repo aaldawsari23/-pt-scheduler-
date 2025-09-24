@@ -2,13 +2,20 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { addDays, getISODateString, toGregorianTimeString, toHijriDateString, toGregorianDateString } from '../../utils/dateUtils';
 import { Specialty, type Provider, type Appointment, AppointmentType, AuditAction, type Settings } from '../../types';
-import { generateUniqueId, normalizeArabicDigits } from '../../utils/helpers';
+import { generateUniqueId, normalizeArabicDigits, generateTimeSlots } from '../../utils/helpers';
 import { SLOT_DURATION_MINUTES } from '../../constants';
+import { calculateAvailabilityForDay } from '../../utils/availability';
 
 
 // ====================================================================================
 //  HELPER FUNCTIONS & SHARED COMPONENTS
 // ====================================================================================
+
+const specialtyBadgeColors: { [key in Specialty]?: string } = {
+    [Specialty.MSK]: 'badge-msk',
+    [Specialty.Neuro]: 'badge-neuro',
+    [Specialty.PT_Service]: 'badge-pt-service',
+};
 
 const getAppointmentColor = (type: AppointmentType) => {
     switch(type) {
@@ -19,34 +26,6 @@ const getAppointmentColor = (type: AppointmentType) => {
     }
 }
 
-const generateTimeSlots = (settings: Settings): string[] => {
-    const slots: string[] = [];
-    const { morningStartHour, morningEndHour, afternoonStartHour, afternoonEndHour } = settings;
-    const slotIncrement = SLOT_DURATION_MINUTES / 60;
-
-    // Morning slots
-    for (let h = morningStartHour; h < morningEndHour; h += slotIncrement) {
-        const hour = Math.floor(h);
-        const minute = Math.round((h % 1) * 60);
-        if (minute < 60) {
-            const d = new Date();
-            d.setHours(hour, minute, 0, 0);
-            slots.push(toGregorianTimeString(d));
-        }
-    }
-
-    // Afternoon slots
-    for (let h = afternoonStartHour; h < afternoonEndHour; h += slotIncrement) {
-        const hour = Math.floor(h);
-        const minute = Math.round((h % 1) * 60);
-         if (minute < 60) {
-            const d = new Date();
-            d.setHours(hour, minute, 0, 0);
-            slots.push(toGregorianTimeString(d));
-        }
-    }
-    return [...new Set(slots)]; // Remove duplicates in case of overlapping shifts
-};
 
 // ====================================================================================
 //  INTERNAL UI COMPONENTS
@@ -135,6 +114,7 @@ const ProviderColumn: React.FC<{
         showToast(`تم حجز موعد للملف ${fileNo} الساعة ${editingSlot.time}`, 'success');
         logAudit({ action: AuditAction.Create, fileNo, providerId: provider.id, providerName: provider.name, start: newAppointment.start, end: newAppointment.end, details: `حجز أسبوعي` });
         setEditingSlot(null);
+        setBookingState(null);
     };
 
     const extra = extraCapacities.find(e => e.providerId === provider.id && e.date === dayISO)?.slots || 0;
@@ -146,8 +126,8 @@ const ProviderColumn: React.FC<{
         <div className="flex flex-col border-r last:border-r-0 border-slate-200 h-full">
             <div className="p-3 border-b text-center sticky top-0 bg-white/80 backdrop-blur-sm z-10">
                 <h4 className="font-bold text-slate-800">{provider.name}</h4>
-                <span className="text-xs text-slate-600 font-medium bg-slate-200 px-2 py-0.5 rounded-full inline-block mb-1.5">{provider.specialty}</span>
-                <span className="text-sm font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">المتاح: <span className="font-bold text-blue-600">{availableCount}</span></span>
+                <span className={`badge ${specialtyBadgeColors[provider.specialty]} mb-1.5`}>{provider.specialty}</span>
+                <span className="text-sm font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full block">المتاح: <span className="font-bold text-blue-600">{availableCount}</span></span>
             </div>
 
             <div className="flex-grow overflow-y-auto p-2">
@@ -172,7 +152,7 @@ const ProviderColumn: React.FC<{
                                             time={time}
                                             onClick={() => setEditingSlot({ providerId: provider.id, dayISO, time })}
                                         />
-                                ))}
+                                    ))}
                             </div>
                         )}
                     </>
@@ -208,9 +188,10 @@ interface WeekViewProps {
   currentDate: Date;
   selectedSpecialty: Specialty;
   selectedProviderId: string | null;
+  availabilityFilter: 'all' | 'available' | 'booked';
 }
-const WeekView: React.FC<WeekViewProps> = ({ currentDate, selectedProviderId, selectedSpecialty }) => {
-    const { providers, settings, setAppointments, askConfirmation, logAudit } = useAppContext();
+const WeekView: React.FC<WeekViewProps> = ({ currentDate, selectedProviderId, selectedSpecialty, availabilityFilter }) => {
+    const { providers, settings, setAppointments, askConfirmation, logAudit, appointments, extraCapacities, vacations } = useAppContext();
     const [bookingState, setBookingState] = useState<{ providerId: string; dayISO: string } | null>(null);
     const [editingSlot, setEditingSlot] = useState<{ time: string; dayISO: string; providerId: string } | null>(null);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -268,23 +249,48 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, selectedProviderId, se
             )}
             
             {displayDays.map(day => {
-                const dayOfWeek = day.getDay();
                 const dayISO = getISODateString(day);
-                
-                let providersForDay = providers.filter(p => p.days.includes(dayOfWeek));
-                if (selectedProviderId) providersForDay = providersForDay.filter(p => p.id === selectedProviderId);
-                else if (selectedSpecialty !== Specialty.All) providersForDay = providersForDay.filter(p => p.specialty === selectedSpecialty);
 
-                if (providersForDay.length === 0 && (selectedProviderId || selectedSpecialty !== Specialty.All)) return null;
+                const { workingProviders } = calculateAvailabilityForDay(
+                    day,
+                    providers,
+                    appointments,
+                    vacations,
+                    extraCapacities,
+                    selectedProviderId,
+                    selectedSpecialty
+                );
+                
+                let providersForDay;
+                if (availabilityFilter === 'all') {
+                    providersForDay = workingProviders;
+                } else {
+                    providersForDay = workingProviders.filter(p => {
+                        const extra = extraCapacities.find(e => e.providerId === p.id && e.date === dayISO)?.slots || 0;
+                        const totalCapacity = p.dailyCapacity + extra;
+                         if (totalCapacity === 0) return false;
+
+                        const bookedCount = appointments.filter(a => a.providerId === p.id && getISODateString(new Date(a.start)) === dayISO).length;
+                        const hasAvailableSlots = totalCapacity > bookedCount;
+
+                        if (availabilityFilter === 'available') return hasAvailableSlots;
+                        if (availabilityFilter === 'booked') return !hasAvailableSlots;
+                        return true;
+                    });
+                }
+                
+                const dayOfWeek = day.getDay();
+                const isFiltered = selectedProviderId || selectedSpecialty !== Specialty.All || availabilityFilter !== 'all';
+                if (providersForDay.length === 0 && isFiltered) return null;
 
                 return (
-                    <div key={dayISO} className="flex-shrink-0 flex flex-col bg-white rounded-lg shadow-soft overflow-hidden border border-slate-200" style={{ width: `${Math.max(1, providersForDay.length) * 11}rem`, maxWidth: '80vw' }}>
+                    <div key={dayISO} className="flex-shrink-0 flex flex-col bg-white rounded-lg shadow-soft border border-slate-200" style={{ width: `${Math.max(1, providersForDay.length) * 11}rem`, maxWidth: '80vw' }}>
                         <div className="p-3 border-b bg-slate-50 text-center sticky top-0 z-20">
                             <h3 className="font-bold text-slate-800">{['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'][dayOfWeek]}</h3>
                             <p className="text-sm text-slate-500">{toGregorianDateString(day, { day: 'numeric', month: 'short' })}</p>
                             <p className="text-xs text-slate-400 font-normal">{toHijriDateString(day)}</p>
                         </div>
-                        <div className={`flex-grow grid overflow-hidden`} style={{ gridTemplateColumns: `repeat(${Math.max(1, providersForDay.length)}, 1fr)` }}>
+                        <div className={`flex-grow grid`} style={{ gridTemplateColumns: `repeat(${Math.max(1, providersForDay.length)}, 1fr)` }}>
                            {providersForDay.length > 0 ? (
                                 providersForDay.map(provider => (
                                     <ProviderColumn

@@ -1,22 +1,17 @@
-import { Appointment } from '../../types';
-import { WORK_HOURS, SLOT_DURATION_MINUTES } from '../../constants';
-import { getISODateString, toGregorianTimeString } from '../../utils/dateUtils';
+import { Appointment, Settings } from '../../types';
+import { getISODateString } from '../../utils/dateUtils';
+import { generateTimeSlots } from '../../utils/helpers';
 
-export const findNextAvailableSlot = (providerId: string, date: Date, appointments: Appointment[]): string | null => {
+export const findNextAvailableSlot = (providerId: string, date: Date, appointments: Appointment[], settings: Settings): string | null => {
     const dateISO = getISODateString(date);
     
-    const allSlots: string[] = [];
-    for (let hour = WORK_HOURS.start; hour < WORK_HOURS.end; hour += SLOT_DURATION_MINUTES / 60) {
-        const d = new Date();
-        d.setHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
-        allSlots.push(toGregorianTimeString(d));
-    }
+    const allSlots = generateTimeSlots(settings);
 
-    const bookedSlots = appointments
+    const bookedSlots = new Set(appointments
         .filter(a => a.providerId === providerId && getISODateString(new Date(a.start)) === dateISO)
-        .map(a => toGregorianTimeString(new Date(a.start)));
+        .map(a => new Date(a.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })));
     
-    const availableSlot = allSlots.find(slot => !bookedSlots.includes(slot));
+    const availableSlot = allSlots.find(slot => !bookedSlots.has(slot));
 
     return availableSlot || null;
 }

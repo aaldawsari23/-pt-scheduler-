@@ -1,7 +1,7 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { AuditAction, type Provider, type Appointment, type Vacation, type Settings, type SlotLock, type Toast, type ConfirmationState, type TimeOff, type ExtraCapacity, type AuditEntry, type EmergencyLogEntry } from '../types';
-import { INITIAL_PROVIDERS, INITIAL_SETTINGS } from '../constants';
+import { INITIAL_PROVIDERS, INITIAL_SETTINGS, INITIAL_APPOINTMENTS } from '../constants';
 import { generateUniqueId } from '../utils/helpers';
 
 interface AppContextType {
@@ -35,7 +35,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [providers, setProviders] = useLocalStorage<Provider[]>('providers', INITIAL_PROVIDERS);
-  const [appointments, setAppointments] = useLocalStorage<Appointment[]>('appointments', []);
+  const [appointments, setAppointments] = useLocalStorage<Appointment[]>('appointments', INITIAL_APPOINTMENTS);
   const [vacations, setVacations] = useLocalStorage<Vacation[]>('vacations', []);
   const [timeOffs, setTimeOffs] = useLocalStorage<TimeOff[]>('timeOffs', []);
   const [extraCapacities, setExtraCapacities] = useLocalStorage<ExtraCapacity[]>('extraCapacities', []);

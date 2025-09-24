@@ -2,6 +2,7 @@ import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { addDays, getISODateString } from '../../utils/dateUtils';
 import { Specialty, type ViewType } from '../../types';
+import { calculateAvailabilityForDay } from '../../utils/availability';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -41,34 +42,20 @@ const MonthView: React.FC<MonthViewProps> = ({ currentDate, setCurrentDate, setV
         {daysInGrid.map((day, index) => {
           const isCurrentMonth = day.getMonth() === month;
           const isToday = new Date().toDateString() === day.toDateString();
-          const dayISO = getISODateString(day);
-          const dayOfWeek = day.getDay();
-
-          let activeProviders = providers.filter(p => p.days.includes(dayOfWeek));
-
-          if (selectedProviderId) {
-            activeProviders = activeProviders.filter(p => p.id === selectedProviderId);
-          } else if (selectedSpecialty !== Specialty.All) {
-            activeProviders = activeProviders.filter(p => p.specialty === selectedSpecialty);
-          }
           
-          const totalCapacity = activeProviders.reduce((acc, p) => {
-            const extra = extraCapacities.find(e => e.providerId === p.id && e.date === dayISO)?.slots || 0;
-            const isOnVacation = vacations.some(v => (v.providerId === p.id || !v.providerId) && dayISO >= v.startDate && dayISO <= v.endDate);
-            return isOnVacation ? acc : acc + p.dailyCapacity + extra;
-          }, 0);
+          const { bookedCount, availableSlots, totalCapacity, workingProviders } = calculateAvailabilityForDay(
+            day,
+            providers,
+            appointments,
+            vacations,
+            extraCapacities,
+            selectedProviderId,
+            selectedSpecialty
+          );
           
-          let appointmentsOnDay = appointments.filter(a => getISODateString(new Date(a.start)) === dayISO);
-          if (selectedProviderId) {
-              appointmentsOnDay = appointmentsOnDay.filter(a => a.providerId === selectedProviderId);
-          } else if (selectedSpecialty !== Specialty.All) {
-              const providerIdsInSpecialty = providers.filter(p => p.specialty === selectedSpecialty).map(p => p.id);
-              appointmentsOnDay = appointmentsOnDay.filter(a => providerIdsInSpecialty.includes(a.providerId));
-          }
-
-          const appCount = appointmentsOnDay.length;
-          const availableSlots = Math.max(0, totalCapacity - appCount);
-
+          const hasAppointments = bookedCount > 0;
+          const hasCapacity = totalCapacity > 0;
+          
           const isWeekend = day.getDay() === 5 || day.getDay() === 6;
           
           return (
@@ -86,11 +73,20 @@ const MonthView: React.FC<MonthViewProps> = ({ currentDate, setCurrentDate, setV
                               ${isToday ? 'bg-blue-600 text-white rounded-full h-7 w-7 flex items-center justify-center shadow-lg' : ''}`}>
                 {day.getDate()}
               </span>
-              {isCurrentMonth && !isWeekend && totalCapacity > 0 && (
+              {isCurrentMonth && !isWeekend && (hasCapacity || hasAppointments) && (
                 <div className="mt-auto text-center space-y-1">
-                  <div className="text-xs bg-green-100 text-green-800 rounded px-1 py-0.5">متاح: <span className="font-bold">{availableSlots}</span></div>
-                  <div className="text-xs bg-red-100 text-red-800 rounded px-1 py-0.5">محجوز: <span className="font-bold">{appCount}</span></div>
+                  <div className={`text-xs rounded px-1 py-0.5 ${availableSlots > 0 ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}>
+                      متاح: <span className="font-bold">{availableSlots}</span>
+                  </div>
+                  <div className="text-xs bg-red-100 text-red-800 rounded px-1 py-0.5">
+                      محجوز: <span className="font-bold">{bookedCount}</span>
+                  </div>
                 </div>
+              )}
+              {isCurrentMonth && !isWeekend && !hasCapacity && !hasAppointments && workingProviders.length === 0 && (
+                  <div className="mt-auto text-center">
+                      <div className="text-xs bg-slate-100 text-slate-500 rounded px-1 py-0.5">مغلق</div>
+                  </div>
               )}
             </div>
           );

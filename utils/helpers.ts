@@ -1,4 +1,10 @@
 
+
+import { type Settings } from '../types';
+import { SLOT_DURATION_MINUTES } from '../constants';
+import { toGregorianTimeString } from './dateUtils';
+
+
 export const normalizeArabicDigits = (str: string): string => {
   if (!str) return '';
   const arabicDigits: { [key: string]: string } = {
@@ -59,37 +65,31 @@ export const exportToCsv = (data: any[], filename: string) => {
     document.body.removeChild(link);
 };
 
-// lightweight time helpers used by BookingBar and others
-export type SlotGenOpts = { start: string; end: string; stepMinutes?: number };
+export const generateTimeSlots = (settings: Settings): string[] => {
+    const slots: string[] = [];
+    const { morningStartHour, morningEndHour, afternoonStartHour, afternoonEndHour } = settings;
+    const slotIncrement = SLOT_DURATION_MINUTES / 60;
 
-const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    // Morning slots
+    for (let h = morningStartHour; h < morningEndHour; h += slotIncrement) {
+        const hour = Math.floor(h);
+        const minute = Math.round((h % 1) * 60);
+        if (minute < 60) {
+            const d = new Date();
+            d.setHours(hour, minute, 0, 0);
+            slots.push(toGregorianTimeString(d));
+        }
+    }
 
-export function toMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-}
-
-export function fromMinutes(total: number): string {
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  return `${pad(h)}:${pad(m)}`;
-}
-
-export function formatSlot(hhmm: string): string {
-  // 24h "13:30" -> "1:30 PM"
-  const [h, m] = hhmm.split(":").map(Number);
-  const suffix = h >= 12 ? "PM" : "AM";
-  const hour12 = ((h + 11) % 12) + 1;
-  return `${hour12}:${pad(m)} ${suffix}`;
-}
-
-export function generateTimeSlots({ start, end, stepMinutes = 15 }: SlotGenOpts): string[] {
-  const out: string[] = [];
-  let t = toMinutes(start);
-  const stop = toMinutes(end);
-  while (t <= stop) {
-    out.push(fromMinutes(t));
-    t += stepMinutes;
-  }
-  return out;
-}
+    // Afternoon slots
+    for (let h = afternoonStartHour; h < afternoonEndHour; h += slotIncrement) {
+        const hour = Math.floor(h);
+        const minute = Math.round((h % 1) * 60);
+         if (minute < 60) {
+            const d = new Date();
+            d.setHours(hour, minute, 0, 0);
+            slots.push(toGregorianTimeString(d));
+        }
+    }
+    return [...new Set(slots)]; // Remove duplicates in case of overlapping shifts
+};

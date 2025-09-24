@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import Modal from '../common/Modal';
-import { Specialty, type Provider, type Vacation, type TimeOff, type ExtraCapacity, type AuditEntry, type EmergencyLogEntry } from '../../types';
-import { generateUniqueId, exportToCsv, transliterate } from '../../utils/helpers';
+import { Specialty, type Provider, type Vacation, type TimeOff, type ExtraCapacity, type AuditEntry, type EmergencyLogEntry, type Appointment, AppointmentType } from '../../types';
+import { generateUniqueId, exportToCsv, transliterate, normalizeArabicDigits } from '../../utils/helpers';
 import { getISODateString, toGregorianDateTimeString, toGregorianTimeString } from '../../utils/dateUtils';
+import { SLOT_DURATION_MINUTES } from '../../constants';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     vacations, setVacations,
     timeOffs, setTimeOffs,
     extraCapacities, setExtraCapacities,
-    appointments,
+    appointments, setAppointments,
     showToast,
     askConfirmation,
     auditLog,
@@ -26,6 +27,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Local state for editing
   const [localProviders, setLocalProviders] = useState<Provider[]>([]);
@@ -130,6 +132,88 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       showToast(`تم بدء تصدير الملف ${format.toUpperCase()}`, 'success');
   };
 
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const csvText = e.target?.result as string;
+            const lines = csvText.trim().split('\n');
+            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            const rows = lines.slice(1);
+
+            const requiredHeaders = ['fileNo', 'providerSlug', 'startDate', 'startTime', 'type'];
+            if (!requiredHeaders.every(h => header.includes(h))) {
+                throw new Error('CSV file is missing required headers (fileNo, providerSlug, startDate, startTime, type).');
+            }
+            
+            const newAppointments: Appointment[] = [];
+            for (const rowText of rows) {
+                const values = rowText.split(',').map(v => v.trim().replace(/"/g, ''));
+                const row: {[key: string]: string} = header.reduce((obj, h, i) => {
+                    obj[h] = values[i];
+                    return obj;
+                }, {});
+
+                const provider = providers.find(p => p.slug === row.providerSlug);
+                if (!provider) {
+                    console.warn(`Skipping row: provider with slug '${row.providerSlug}' not found.`);
+                    continue;
+                }
+
+                if (!row.fileNo || !row.startDate || !row.startTime || !row.type) {
+                    console.warn(`Skipping row due to missing data: ${rowText}`);
+                    continue;
+                }
+
+                const start = new Date(`${row.startDate}T${row.startTime}`);
+                if (isNaN(start.getTime())) {
+                    console.warn(`Skipping row due to invalid date: ${rowText}`);
+                    continue;
+                }
+
+                const newApp: Appointment = {
+                    id: generateUniqueId(),
+                    fileNo: normalizeArabicDigits(row.fileNo),
+                    providerId: provider.id,
+                    start: start.toISOString(),
+                    end: new Date(start.getTime() + SLOT_DURATION_MINUTES * 60000).toISOString(),
+                    type: row.type as AppointmentType,
+                    createdAt: new Date().toISOString(),
+                };
+                newAppointments.push(newApp);
+            }
+            
+            if (newAppointments.length > 0) {
+                 askConfirmation(
+                    'تأكيد الاستيراد',
+                    `تم العثور على ${newAppointments.length} موعد صالح. هل تريد إضافتهم إلى الجدول؟`,
+                    () => {
+                        setAppointments(prev => [...prev, ...newAppointments]);
+                        showToast(`تم استيراد ${newAppointments.length} موعد بنجاح`, 'success');
+                    }
+                );
+            } else {
+                showToast('لم يتم العثور على مواعيد صالحة في الملف.', 'info');
+            }
+
+        } catch (error) {
+            console.error('Error parsing CSV:', error);
+            showToast(error instanceof Error ? error.message : 'فشل في تحليل الملف', 'error');
+        }
+    };
+    reader.onerror = () => {
+        showToast('Error reading file.', 'error');
+    };
+    reader.readAsText(file);
+    
+    if(event.target) {
+        event.target.value = '';
+    }
+  };
+
   const renderAuth = () => (
     <div className="flex flex-col items-center gap-4 p-8">
         <h4 className="text-lg font-bold">{settings.pin ? 'الرجاء إدخال رمز الدخول' : 'الرجاء تعيين رمز دخول جديد'}</h4>
@@ -143,6 +227,30 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const renderSettings = () => (
     <div className="space-y-6">
+        {/* --- Monthly Stats Card --- */}
+        <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
+            <h4 className="text-lg font-semibold mb-4 text-slate-700">تقرير شهري (أرقام ثابتة)</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="p-3 bg-white rounded-lg border">
+                    <div className="text-2xl font-bold text-blue-600">450</div>
+                    <div className="text-sm text-slate-500">إجمالي المواعيد</div>
+                </div>
+                <div className="p-3 bg-white rounded-lg border">
+                    <div className="text-2xl font-bold text-green-600">60</div>
+                    <div className="text-sm text-slate-500">مرضى جدد</div>
+                </div>
+                <div className="p-3 bg-white rounded-lg border">
+                    <div className="text-2xl font-bold text-slate-800">92%</div>
+                    <div className="text-sm text-slate-500">نسبة الإشغال</div>
+                </div>
+                <div className="p-3 bg-white rounded-lg border">
+                    <div className="text-2xl font-bold text-amber-600">MSK</div>
+                    <div className="text-sm text-slate-500">التخصص الأكثر طلباً</div>
+                </div>
+            </div>
+            <p className="text-xs text-slate-400 mt-3 text-center">ملاحظة: هذه الأرقام هي قيم تقديرية ثابتة للعرض فقط حسب الطلب.</p>
+        </div>
+
         {/* --- General Settings Card --- */}
         <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
             <h4 className="text-lg font-semibold mb-4 text-slate-700">الإعدادات العامة</h4>
@@ -199,7 +307,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                            className="w-full p-2 border rounded-md mt-1" min="12" max="16" step="0.5" />
                   </div>
                   <div>
-                    <label className="text-sm text-slate-606">وقت نهاية المساء</label>
+                    <label className="text-sm text-slate-600">وقت نهاية المساء</label>
                     <input type="number" value={settings.afternoonEndHour} 
                            onChange={(e) => setSettings({...settings, afternoonEndHour: parseFloat(e.target.value) || 15.5})} 
                            className="w-full p-2 border rounded-md mt-1" min="14" max="20" step="0.5" />
@@ -245,7 +353,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               </div>
               <div className="flex items-center gap-4 pt-2 border-t">
                 <label className="text-sm text-slate-500">خانات إضافية مؤقتة</label>
-                {extraCapacities.filter(ec => ec.providerId === p.id).map(ec => (
+                {localExtraCapacities.filter(ec => ec.providerId === p.id).map(ec => (
                   <div key={ec.id} className="flex items-center gap-2 bg-amber-50 px-2 py-1 rounded">
                     <span className="text-xs">{ec.date}</span>
                     <span className="text-xs font-bold text-amber-600">+{ec.slots}</span>
@@ -381,7 +489,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       {/* --- Data & Sync Card --- */}
        <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
             <h4 className="text-lg font-semibold mb-4 text-slate-700">البيانات والمزامنة</h4>
-            <div className="flex flex-wrap gap-4"><button onClick={() => handleExport('csv')} className="bg-slate-700 text-white px-4 py-2 rounded-md hover:bg-slate-800">تصدير CSV</button></div>
+            <div className="flex flex-wrap gap-4">
+              <button onClick={() => handleExport('csv')} className="bg-slate-700 text-white px-4 py-2 rounded-md hover:bg-slate-800">تصدير CSV</button>
+              <button onClick={() => fileInputRef.current?.click()} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">استيراد CSV</button>
+              <input type="file" ref={fileInputRef} onChange={handleFileImport} style={{ display: 'none' }} accept=".csv" />
+            </div>
         </div>
 
       <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-slate-200"><button onClick={onClose} className="bg-slate-200 text-slate-800 px-6 py-2 rounded-md hover:bg-slate-300">إلغاء</button><button onClick={handleSaveChanges} className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">حفظ التغييرات</button></div>

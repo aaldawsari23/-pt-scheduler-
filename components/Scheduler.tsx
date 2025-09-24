@@ -27,12 +27,19 @@ const getInitialDate = (): Date => {
   return date;
 };
 
+const specialtyBadgeColors: { [key in Specialty]?: string } = {
+    [Specialty.MSK]: 'badge-msk',
+    [Specialty.Neuro]: 'badge-neuro',
+    [Specialty.PT_Service]: 'badge-pt-service',
+};
+
 const Scheduler: React.FC = () => {
   const { providers, settings, appointments, setAppointments, vacations, extraCapacities, showToast, logAudit, logEmergency } = useAppContext();
   const [currentDate, setCurrentDate] = useState(getInitialDate());
   const [view, setView] = useState<ViewType>(ViewType.Week);
   const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty>(Specialty.All);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'available' | 'booked'>('all');
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState(false);
@@ -99,7 +106,7 @@ const Scheduler: React.FC = () => {
 
         const targetProvider = providerAvailability[0].provider;
 
-        const nextSlotTime = findNextAvailableSlot(targetProvider.id, date, appointments);
+        const nextSlotTime = findNextAvailableSlot(targetProvider.id, date, appointments, settings);
         if (nextSlotTime) {
             return { provider: targetProvider, date, time: nextSlotTime };
         }
@@ -235,7 +242,7 @@ const Scheduler: React.FC = () => {
     });
   }, [providers, selectedSpecialty]);
   
-  const navigateDate = (direction: number) => {
+  const navigateDate = useCallback((direction: number) => {
     let newDate;
     if (view === ViewType.Day) {
       newDate = new Date(currentDate);
@@ -254,7 +261,27 @@ const Scheduler: React.FC = () => {
       newDate = view === ViewType.Week ? addWeeks(currentDate, direction) : addMonths(currentDate, direction);
     }
     setCurrentDate(newDate);
-  };
+  }, [view, currentDate, settings.blockFridays, settings.blockWeekends]);
+
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        // Do not navigate if a modal is open or if an input element is focused
+        if (isSettingsModalOpen || isProviderModalOpen || isHepModalOpen || isFabOpen) return;
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+
+        if (e.key === 'ArrowRight') {
+            navigateDate(1);
+        } else if (e.key === 'ArrowLeft') {
+            navigateDate(-1);
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [navigateDate, isSettingsModalOpen, isProviderModalOpen, isHepModalOpen, isFabOpen]);
 
   const handleGoToToday = () => {
     let today = new Date();
@@ -295,93 +322,98 @@ const Scheduler: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-slate-100 font-sans text-slate-800">
-      <header className="bg-blue-800 text-white p-2 flex justify-between items-center shadow-lg no-print flex-shrink-0 flex-wrap gap-y-2">
-        <div className="flex items-center gap-2 sm:gap-4">
-          <img src="/logo.svg" alt="شعار مركز التأهيل" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
-          <div>
-            <h1 className="text-base sm:text-lg font-bold">مستشفى الملك عبدالله - بيشه</h1>
-            <h2 className="text-xs sm:text-sm opacity-80">مركز التأهيل الطبي - قسم العلاج الطبيعي</h2>
+    <div className="flex flex-col h-screen bg-slate-200 font-sans text-slate-800">
+      <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-2 shadow-xl no-print flex-shrink-0">
+          <div className="flex items-center justify-center gap-2 mb-1">
+              <img src="/logo.png" alt="شعار مركز التأهيل" className="h-10 w-10 object-contain rounded-lg shadow-lg bg-white/10 p-1" />
+              <div className='text-center'>
+                <h1 className="text-base sm:text-lg font-black tracking-wide text-white">مستشفى الملك عبدالله - بيشه</h1>
+                <h2 className="text-xs sm:text-sm font-bold text-blue-100 mt-0.5">العلاج الطبيعي - الفرز</h2>
+              </div>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2 flex-wrap justify-center">
-            <button 
+
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setIsSettingsModalOpen(true)} className="p-1.5 rounded-full hover:bg-white/20 transition-all shadow-md" title="الإعدادات">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.50 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
+              <button type="button" onClick={() => setIsHepModalOpen(true)} className="inline-flex items-center px-2 py-1.5 rounded-lg border border-white/30 bg-white/15 hover:bg-white/25 text-xs font-bold shadow-md transition-all">التمارين المنزلية</button>
+            </div>
+            
+             <button 
                 onClick={() => setIsProviderModalOpen(true)}
-                className="md:hidden flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 font-semibold transition-all text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 12.414V17a1 1 0 01-1.447.894l-2-1A1 1 0 018 16v-3.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" /></svg>
+                className="md:hidden flex items-center gap-1.5 px-2 py-1.5 bg-white/20 rounded-lg hover:bg-white/30 font-bold transition-all text-xs shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 12.414V17a1 1 0 01-1.447.894l-2-1A1 1 0 018 16v-3.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" /></svg>
                 <span>تصفية</span>
             </button>
-        </div>
-        
-        <div className="flex items-center gap-1 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => setIsHepModalOpen(true)}
-              className="inline-flex items-center px-3 py-2 rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 text-sm font-medium"
-            >
-              التمارين المنزلية
-            </button>
-            <button onClick={() => setIsSettingsModalOpen(true)} className="p-2 rounded-full hover:bg-black/20 transition-all" title="الإعدادات">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            </button>
-        </div>
+          </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* --- Providers Sidebar (Right) --- */}
-        <aside className="w-24 bg-white border-l border-slate-200 p-2 flex-col no-print hidden md:flex">
-          <div className='flex flex-col items-start gap-2 mb-3'>
-            <h3 className="text-sm font-bold text-slate-800 px-1">العيادات</h3>
+        <aside className="w-44 bg-slate-50 border-l border-slate-300 p-2 flex-col no-print hidden md:flex shadow-lg">
+          <div className='flex flex-col items-start gap-1.5 mb-2'>
+            <h3 className="text-sm font-extrabold text-slate-800 px-1">العيادات</h3>
             <div className="flex flex-col gap-1 w-full">
                 {(Object.values(Specialty)).map(key => (
                     <button key={key} onClick={() => handleSpecialtySelect(key)}
-                        className={`w-full px-1 py-1.5 text-xs rounded transition-colors text-center ${selectedSpecialty === key ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                        className={`w-full px-2 py-1.5 text-xs rounded-lg transition-all text-center font-semibold shadow-md ${selectedSpecialty === key ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:shadow-lg'}`}>
                         {key}
                     </button>
                 ))}
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-1.5">
+          <div className='flex flex-col items-start gap-1.5 mb-4'>
+            <h3 className="text-sm font-extrabold text-slate-800 px-1">حالة الحجز</h3>
+            <div className="flex bg-slate-200 p-1 rounded-lg w-full text-center">
+              <button onClick={() => setAvailabilityFilter('all')} className={`flex-1 text-[11px] px-1 py-1.5 rounded-md transition-all font-semibold ${availabilityFilter === 'all' ? 'bg-white shadow-sm' : 'text-slate-600 hover:bg-slate-300/50'}`}>الكل</button>
+              <button onClick={() => setAvailabilityFilter('available')} className={`flex-1 text-[11px] px-1 py-1.5 rounded-md transition-all font-semibold ${availabilityFilter === 'available' ? 'bg-white shadow-sm' : 'text-slate-600 hover:bg-slate-300/50'}`}>متاح</button>
+              <button onClick={() => setAvailabilityFilter('booked')} className={`flex-1 text-[11px] px-1 py-1.5 rounded-md transition-all font-semibold ${availabilityFilter === 'booked' ? 'bg-white shadow-sm' : 'text-slate-600 hover:bg-slate-300/50'}`}>محجوز</button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-1">
             {filteredProviders.length > 0 ? filteredProviders.map(provider => (
               <div key={provider.id} onClick={() => handleProviderSelect(provider.id === selectedProviderId ? null : provider.id)}
-                  className={`p-2 rounded-lg cursor-pointer transition-all border-2 ${selectedProviderId === provider.id ? 'bg-blue-100 border-blue-400 shadow-md' : 'bg-slate-50 border-transparent hover:bg-slate-100 hover:border-slate-300'}`}>
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="font-bold text-sm leading-tight">{provider.name}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${selectedProviderId === provider.id ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'}`}>{provider.specialty}</span>
+                  className={`p-2 rounded-lg cursor-pointer transition-all border ${selectedProviderId === provider.id ? 'bg-blue-50 border-blue-300 shadow-md' : 'bg-white border-slate-200 hover:bg-slate-50 hover:shadow-sm'}`}>
+                  <div className="flex flex-col items-start gap-0.5">
+                    <span className="font-bold text-xs leading-tight break-words">{provider.name}</span>
+                    <span className={`badge ${specialtyBadgeColors[provider.specialty]}`}>{provider.specialty}</span>
                   </div>
               </div>  
-            )) : <div className="text-center p-4 text-slate-500 text-xs">لا يوجد معالجون.</div>}
+            )) : <div className="text-center p-2 text-slate-500 text-xs">لا يوجد معالجون.</div>}
           </div>
         </aside>
 
         {/* --- Main Content Area (Left) --- */}
-        <main className="flex-1 flex flex-col bg-slate-100 p-1 sm:p-3 overflow-hidden">
-             <div className="flex-grow flex flex-col bg-white rounded-xl shadow-inner border border-slate-200 overflow-hidden">
-                <div className="flex-shrink-0 border-b border-slate-200 p-3 flex flex-wrap justify-between items-center gap-4">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                        {view !== ViewType.Week && (
-                          <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                              <button onClick={() => navigateDate(1)} className="p-1 sm:p-2 rounded-md hover:bg-slate-200 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg></button>
-                              <button onClick={() => navigateDate(-1)} className="p-1 sm:p-2 rounded-md hover:bg-slate-200 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg></button>
-                          </div>
-                        )}
-                        <button onClick={handleGoToToday} className="px-3 sm:px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-100 font-semibold transition-all">اليوم</button>
-                         <span className="font-bold text-slate-700 text-sm sm:text-base">{dateRangeString}</span>
-                    </div>
-
-                    <div className="flex bg-slate-100 p-1 rounded-lg">
+        <main className="flex-1 flex flex-col bg-slate-200 p-1 overflow-hidden">
+             <div className="flex-grow flex flex-col bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                <div className="flex-shrink-0 border-b border-slate-200 p-1.5 flex flex-wrap justify-between items-center gap-2">
+                    <div className="flex bg-slate-100 p-1 rounded-lg shadow-inner">
                         {(Object.values(ViewType)).map(key => (
-                        <button key={key} onClick={() => setView(key)} className={`px-3 sm:px-4 py-1.5 text-sm rounded-md transition-all ${view === key ? 'bg-blue-600 text-white font-bold shadow' : 'text-slate-600 hover:bg-slate-200'}`}>
+                        <button key={key} onClick={() => setView(key)} className={`px-3 py-1.5 text-xs rounded-md transition-all font-bold ${view === key ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-600 hover:bg-white hover:shadow-md'}`}>
                             { {day: 'يومي', week: 'أسبوعي', month: 'شهري'}[key] }
                         </button>
                         ))}
                     </div>
+                     <div className='flex items-center gap-2 sm:gap-3'>
+                       <button onClick={() => navigateDate(-1)} className="p-2 rounded-lg hover:bg-slate-100 transition-all" aria-label="Previous Day / Week">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                       </button>
+                       <div className="text-center min-w-[150px] sm:min-w-[220px]">
+                           <span className="font-extrabold text-slate-800 text-sm sm:text-base block">{dateRangeString}</span>
+                           <span className="text-xs text-slate-500 font-normal block">{toHijriDateString(currentDate)}</span>
+                       </div>
+                       <button onClick={() => navigateDate(1)} className="p-2 rounded-lg hover:bg-slate-100 transition-all" aria-label="Next Day / Week">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                       </button>
+                     </div>
+                     <button onClick={handleGoToToday} className="px-3 sm:px-4 py-1.5 text-xs bg-white border border-slate-300 rounded-lg hover:bg-slate-50 font-bold transition-all shadow-sm">اليوم</button>
                 </div>
                  <div className="flex-grow overflow-auto">
-                    {view === ViewType.Day && <DayView currentDate={currentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
-                    {view === ViewType.Week && <WeekView currentDate={currentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
+                    {view === ViewType.Day && <DayView currentDate={currentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} availabilityFilter={availabilityFilter} navigateDate={navigateDate} />}
+                    {view === ViewType.Week && <WeekView currentDate={currentDate} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} availabilityFilter={availabilityFilter} />}
                     {view === ViewType.Month && <MonthView currentDate={currentDate} setCurrentDate={setCurrentDate} setView={setView} selectedProviderId={selectedProviderId} selectedSpecialty={selectedSpecialty} />}
                 </div>
             </div>
@@ -440,6 +472,15 @@ const Scheduler: React.FC = () => {
               ))}
           </div>
         </div>
+        
+        <div className='flex flex-col items-start gap-2 mb-4'>
+            <h3 className="text-lg font-bold text-slate-800 px-1">حالة الحجز</h3>
+            <div className="grid grid-cols-3 gap-2 w-full text-center">
+              <button onClick={() => setAvailabilityFilter('all')} className={`w-full px-2 py-3 text-sm rounded-lg transition-colors ${availabilityFilter === 'all' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>الكل</button>
+              <button onClick={() => setAvailabilityFilter('available')} className={`w-full px-2 py-3 text-sm rounded-lg transition-colors ${availabilityFilter === 'available' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>متاح</button>
+              <button onClick={() => setAvailabilityFilter('booked')} className={`w-full px-2 py-3 text-sm rounded-lg transition-colors ${availabilityFilter === 'booked' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>محجوز</button>
+            </div>
+        </div>
 
         <div className="space-y-2">
           <h3 className="text-lg font-bold text-slate-800 px-1 mt-4">المعالجون</h3>
@@ -448,7 +489,7 @@ const Scheduler: React.FC = () => {
                 className={`p-3 rounded-lg cursor-pointer transition-all border-2 flex items-center justify-between ${selectedProviderId === provider.id ? 'bg-blue-100 border-blue-400 shadow-md' : 'bg-slate-50 border-transparent hover:bg-slate-100'}`}>
                 <div className="flex flex-col items-start">
                   <span className="font-bold text-md">{provider.name}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full mt-1 ${selectedProviderId === provider.id ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'}`}>{provider.specialty}</span>
+                  <span className={`badge ${specialtyBadgeColors[provider.specialty]}`}>{provider.specialty}</span>
                 </div>
                 {selectedProviderId === provider.id && (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" viewBox="0 0 20 20" fill="currentColor">

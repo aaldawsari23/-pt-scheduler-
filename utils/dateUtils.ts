@@ -1,4 +1,5 @@
 
+
 export const getStartOfWeek = (date: Date): Date => {
   const d = new Date(date);
   const day = d.getDay(); // Sunday - 0, Monday - 1
